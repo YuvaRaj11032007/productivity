@@ -4,23 +4,44 @@ class AIService {
   constructor() {
     console.log("AIService constructor called, initializing...");
     this.geminiApiKey = null;
+    this.groqApiKey = null;
     this.currentProvider = 'gemini'; // 'gemini' or 'groq'
     this.currentModel = {
       gemini: 'gemini-1.5-pro',
+      groq: 'llama3-8b-8192'
     };
     this.baseUrls = {
       gemini: 'https://generativelanguage.googleapis.com/v1beta/models',
+      groq: 'https://api.groq.com/openai/v1/chat/completions'
     };
     this.availableModels = {
       gemini: [
+        // Gemini Pro family
+        { id: 'gemini-pro', name: 'Gemini Pro', description: 'Best for text generation and analysis' },
+        { id: 'gemini-pro-vision', name: 'Gemini Pro Vision', description: 'Supports text and images' },
+        // Gemini 1.5 family
+        { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Latest and most capable model' },
+        { id: 'gemini-1.5-pro-vision', name: 'Gemini 1.5 Pro Vision', description: 'Latest with vision capabilities' },
+        { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Faster responses, optimized for speed' },
+        { id: 'gemini-1.5-flash-vision', name: 'Gemini 1.5 Flash Vision', description: 'Fast responses with image support' },
+        { id: 'gemini-1.5-flash-8b', name: 'Gemini 1.5 Flash 8B', description: 'Smaller 8B Flash model' },
+        // Gemini 2.0 family
+        { id: 'gemini-2.0-pro', name: 'Gemini 2.0 Pro', description: '2.0 Pro general model' },
+        { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', description: '2.0 Flash for low-latency workloads' },
+        { id: 'gemini-2.0-flash-lite', name: 'Gemini 2.0 Flash Lite', description: 'Lightweight 2.0 Flash (preview)' },
+        { id: 'gemini-2.0-pro-exp', name: 'Gemini 2.0 Pro Experimental', description: 'Experimental Pro (preview)' },
+        { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash Experimental', description: 'Experimental Flash (preview)' },
+        // Gemini 2.5 family
         { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Low-latency, high-volume tasks; latest 2.5 Flash' },
         { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite', description: 'Lightweight 2.5 Flash model' },
-        { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', description: 'The most capable 2.5 model for complex tasks' },
       ],
+      groq: [
+        { id: 'llama3-8b-8192', name: 'Llama 3 8B', description: 'Fast and efficient for most tasks' },
+      ]
     };
   }
 
-  async generateComprehensiveTaskList(subjectName, level, timeframe, context = {}) {
+  async generateComprehensiveTaskList(subjectName, level, timeframe) {
     const prompt = `
       Create a comprehensive, structured task list for learning **${subjectName}**.
       - **Current Level:** ${level}
@@ -37,18 +58,18 @@ class AIService {
       - Foundational Concepts of ${subjectName} (Estimated Minutes: 180)
       - Advanced Topic in ${subjectName} (Estimated Minutes: 240)
     `;
-    return await this.generateResponse(prompt, context);
+    return await this.generateResponse(prompt);
   }
 
   parseTaskListResponse(response) {
     if (!response) return [];
     
     const tasks = [];
-    const lines = response.split('\n');
+    const lines = response.split('\\n');
     
     for (const line of lines) {
       const trimmedLine = line.replace(/^-/, '').trim();
-      const match = trimmedLine.match(/(.+?)\s*\(Estimated Minutes:\s*(\d+)\)/);
+      const match = trimmedLine.match(/(.+?)\\s*\\(Estimated Minutes:\\s*(\\d+)\\)/);
       
       if (match) {
         tasks.push({
@@ -73,94 +94,55 @@ class AIService {
   }
 
   // Set API keys for Gemini and Groq
-  setApiKeys({ geminiApiKey }) {
+  setApiKeys({ geminiApiKey, groqApiKey }) {
     if (geminiApiKey !== undefined) this.geminiApiKey = geminiApiKey;
+    if (groqApiKey !== undefined) this.groqApiKey = groqApiKey;
   }
 
-
+  setProvider(provider) {
+    this.currentProvider = provider;
+  }
 
   getAvailableModels(provider = this.currentProvider) {
     return this.availableModels[provider] || [];
   }
 
-  async generateResponse(prompt, context = {}, imageDataUrl = null, modelOverride = null) {
+  async generateResponse(prompt, context = {}) {
     if (this.currentProvider === 'gemini') {
-      return this.callGemini(prompt, context, imageDataUrl, modelOverride);
+      return this.callGemini(prompt, context);
+    } else if (this.currentProvider === 'groq') {
+      return this.callGroq(prompt, context);
     }
     throw new Error('Invalid AI provider selected');
   }
 
   // Generate test questions from completed tasks
-  async generateTestQuestions(subjectName, completedTaskNames, numQuestions = 5, difficulty = 'medium', questionType = 'both', context = {}) {
-    let questionTypePrompt = 'Include a mix of multiple-choice questions (MCQ) and open-ended questions.';
-    if (questionType === 'mcq') {
-      questionTypePrompt = 'Only generate multiple-choice questions (MCQ).';
-    } else if (questionType === 'descriptive') {
-      questionTypePrompt = 'Only generate open-ended questions.';
-    }
-
+  async generateTestQuestions(subjectName, completedTaskNames) {
     // Prompt: Only ask from completed tasks, allow MCQ or open-ended
-    let difficultyPrompt = '';
-    if (difficulty === 'advanced') {
-      difficultyPrompt = 'For these advanced questions, you should create imaginary scenarios that require the user to apply their knowledge to solve a problem.';
-    }
-
-    const prompt = `Generate a short test of ${numQuestions} questions for the subject '${subjectName}' at a ${difficulty} difficulty level. ${questionTypePrompt} The questions should be based on these completed topics: ${completedTaskNames.join(", ")}. You should ask questions that test the application of the knowledge, not just recall of information. You can also generate questions on related topics that are not explicitly covered in the completed topics, but are relevant to the subject. ${difficultyPrompt} For MCQs, ensure options are relevant, plausible, and distinct, and provide them as an array of strings (at least 3 options). Always include a 'correct_answer' field for MCQs. For open-ended, just ask the question. Return as JSON: [{id: number, text: string, type: 'mcq' | 'open_ended', options?: string[], correct_answer?: string}].`;
-    const response = await this.generateResponse(prompt, context);
-    console.log('Raw AI response for generateTestQuestions:', response);
+    const prompt = `Generate a short test (3-5 questions) for the subject '${subjectName}'. Only use these completed topics: ${completedTaskNames.join(", ")}. Questions can be MCQs or open-ended. For MCQs, provide options and mark the correct one. For open-ended, just ask the question. Return as JSON: [{id, text, type, options?}].`;
+    const response = await this.generateResponse(prompt);
     // Try to parse JSON
     try {
-      let jsonString = '';
-      let startIndex = -1;
-      let endIndex = -1;
-
-      // Try to find an array first
-      startIndex = response.indexOf('[');
-      endIndex = response.lastIndexOf(']');
-
-      if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
-        // If no array, try to find an object
-        startIndex = response.indexOf('{');
-        endIndex = response.lastIndexOf('}');
-      }
-      
-      if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
-        jsonString = response.substring(startIndex, endIndex + 1);
-      }
-
-      if (!jsonString.trim()) {
-        throw new Error('No valid JSON structure found or extracted JSON is empty.');
-      }
-
-      console.log('Extracted JSON string for generateTestQuestions:', jsonString);
-      const questions = JSON.parse(jsonString);
-      console.log('Parsed AI questions:', questions);
+      const questions = JSON.parse(response);
       return questions;
-    } catch (e) {
-      console.error('Error parsing AI questions:', e);
-      console.error('Full error object:', e);
+    } catch {
       // Fallback: return empty array
       return [];
     }
   }
   async checkTestAnswers(subjectName, questions, answers) {
-    // Prepare questions and answers for the AI, ensuring all MCQ options are included
-    const questionsForAI = questions.map(q => {
-      if (q.type === 'mcq') {
-        return { ...q, user_answer: answers[q.id] };
-      }
-      return { ...q, user_answer: answers[q.id] };
-    });
-
     const prompt = `
     You are an AI testing assistant. Evaluate the user's answers for a test on "${subjectName}".
 
-    **Questions with User Answers:**
-    ${JSON.stringify(questionsForAI, null, 2)}
+    **Questions:**
+    ${JSON.stringify(questions, null, 2)}
+
+    **User's Answers:**
+    ${JSON.stringify(answers, null, 2)}
 
     **Instructions:**
-    1.  For each question, determine if the user's answer is correct. For MCQs, consider all provided options and the user's selected option.
-    2.  Provide a brief, one-sentence explanation for any incorrect answers, referencing the correct option for MCQs.
+    1.  For each question, determine if the user's answer is correct.
+    2.  Provide a brief, one-sentence explanation for any incorrect answers.
     3.  Calculate a "mastery level" (e.g., "Beginner", "Intermediate", "Advanced") based on the user's performance.
     4.  Return a single JSON object with two keys: "answers" (an array of objects with "correct" and "explanation" fields) and "mastery" (a string).
 
@@ -175,27 +157,13 @@ class AIService {
     `;
 
     const response = await this.generateResponse(prompt);
-    console.log('Raw AI response for checkTestAnswers:', response);
 
     try {
-      // First, try to find a JSON markdown block
-      const match = response.match(/```json\n([\s\S]*?)\n```/);
-      if (match && match[1]) {
-        const jsonString = match[1];
-        const results = JSON.parse(jsonString);
-        return results;
-      }
-
-      // Fallback to the old method if no markdown block is found
+      // Clean the response to extract only the JSON part
       const jsonString = response.substring(response.indexOf('{'), response.lastIndexOf('}') + 1);
-      if (jsonString) {
-        const results = JSON.parse(jsonString);
-        return results;
-      }
-
-      throw new Error('No valid JSON found in the response.');
+      const results = JSON.parse(jsonString);
+      return results;
     } catch (e) {
-      console.error('Error parsing AI response for checkTestAnswers:', e);
       // Fallback for non-JSON responses
       return {
         answers: questions.map(() => ({ correct: false, explanation: "Could not parse AI response." })),
@@ -205,26 +173,17 @@ class AIService {
   }
 
 
-  async callGemini(prompt, context, imageDataUrl = null, modelOverride = null) {
-    const model = modelOverride || this.currentModel.gemini;
+  async callGemini(prompt, context) {
+    const model = this.currentModel.gemini;
     const url = `${this.baseUrls.gemini}/${model}:generateContent?key=${this.geminiApiKey}`;
-
-    const parts = [{ text: this.buildPrompt(prompt, context) }];
-
-    if (imageDataUrl) {
-      const mimeType = imageDataUrl.substring(imageDataUrl.indexOf(':') + 1, imageDataUrl.indexOf(';'));
-      const base64Data = imageDataUrl.substring(imageDataUrl.indexOf(',') + 1);
-      parts.push({
-        inline_data: {
-          mime_type: mimeType,
-          data: base64Data
-        }
-      });
-    }
 
     try {
       const response = await axios.post(url, {
-        contents: [{ parts }]
+        contents: [{
+          parts: [{
+            text: this.buildPrompt(prompt, context)
+          }]
+        }]
       });
 
       if (response.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
@@ -234,10 +193,9 @@ class AIService {
       throw new Error(`Invalid or empty response from Gemini API (${model})`);
 
     } catch (error) {
-      console.error('Gemini API Call Error:', error);
       if (error.response) {
         const errorMessage = error.response.data?.error?.message || error.response.statusText;
-        throw new Error(`Gemini API Error (${error.response.status}): ${errorMessage}. Full error: ${JSON.stringify(error.response.data)}`);
+        throw new Error(`Gemini API Error (${error.response.status}): ${errorMessage}`);
       } else if (error.request) {
         throw new Error('Network error: Unable to reach Gemini API. Please check your internet connection.');
       } else {
@@ -246,7 +204,60 @@ class AIService {
     }
   }
 
+  /**
+   * Call Groq API
+   */
+  async callGroq(prompt, context) {
+    const model = this.currentModel.groq;
+    
+    try {
+      const response = await axios.post(
+        this.baseUrls.groq,
+        {
+          model: model,
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an intelligent productivity assistant for a study tracking app. Help users analyze their study patterns, plan their day, and provide roadmaps for learning.'
+            },
+            {
+              role: 'user',
+              content: this.buildPrompt(prompt, context)
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 2048,
+          top_p: 1,
+          stream: false
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${this.groqApiKey}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
 
+      if (response.data?.choices?.[0]?.message?.content) {
+        return response.data.choices[0].message.content;
+      }
+      
+      throw new Error(`Invalid or empty response from Groq API (${model})`);
+      
+    } catch (error) {
+      if (error.response) {
+        // API returned an error response
+        const errorMessage = error.response.data?.error?.message || error.response.statusText;
+        throw new Error(`Groq API Error (${error.response.status}): ${errorMessage}`);
+      } else if (error.request) {
+        // Network error
+        throw new Error('Network error: Unable to reach Groq API. Please check your internet connection.');
+      } else {
+        // Other error
+        throw error;
+      }
+    }
+  }
 
   /**
    * Build comprehensive prompt with context
@@ -281,10 +292,8 @@ Please be specific, actionable, and reference her actual data when relevant. For
     let formattedContext = '';
 
     if (context.subjects && context.subjects.length > 0) {
-      formattedContext += '**SUBJECTS (Most Recent 5):**\n';
-      // Limit to most recent 5 subjects for brevity
-      const recentSubjects = context.subjects.slice(-5);
-      recentSubjects.forEach(subject => {
+      formattedContext += '**SUBJECTS:**\n';
+      context.subjects.forEach(subject => {
         formattedContext += `- ${subject.name} (${subject.category || 'Uncategorized'})\n`;
         formattedContext += `  Daily Goal: ${subject.dailyGoalHours}h\n`;
         if (subject.tasks && subject.tasks.length > 0) {
@@ -300,9 +309,8 @@ Please be specific, actionable, and reference her actual data when relevant. For
     }
 
     if (context.studySessions && context.studySessions.length > 0) {
-      formattedContext += '**RECENT STUDY SESSIONS (Most Recent 5):**\n';
-      // Limit to most recent 5 sessions for brevity
-      const recentSessions = context.studySessions.slice(-5);
+      formattedContext += '**RECENT STUDY SESSIONS:**\n';
+      const recentSessions = context.studySessions.slice(-10); // Last 10 sessions
       recentSessions.forEach(session => {
         const subjectName = context.subjects?.find(s => s.id === session.subjectId)?.name || 'Unknown';
         formattedContext += `- ${subjectName}: ${Math.round(session.duration/60)}h on ${new Date(session.date).toLocaleDateString()}\n`;
@@ -394,12 +402,11 @@ Please be specific, actionable, and reference her actual data when relevant. For
   /**
    * Analyze productivity patterns
    */
-  async analyzeProductivity(subjects, studySessions, dailyGoals, classSchedule) {
+  async analyzeProductivity(subjects, studySessions, dailyGoals) {
     const context = {
       subjects,
       studySessions,
       dailyGoals,
-      classSchedule,
       currentTime: new Date().toISOString()
     };
 
@@ -416,17 +423,16 @@ Please be specific, actionable, and reference her actual data when relevant. For
   /**
    * Plan daily schedule
    */
-  async planDay(subjects, studySessions, dailyGoals, classSchedule, preferences = {}) {
+  async planDay(subjects, studySessions, dailyGoals, preferences = {}) {
     const context = {
       subjects,
       studySessions,
       dailyGoals,
-      classSchedule,
       currentTime: new Date().toISOString(),
       preferences
     };
 
-    const prompt = `Create a personalized daily study plan for today based on my current progress and goals. I have the following classes today: ${JSON.stringify(classSchedule)}. Please schedule my study sessions in my free hours and do not overlap with my classes. Include:
+    const prompt = `Create a personalized daily study plan for today based on my current progress and goals. Include:
 1. Specific time blocks for each subject
 2. Priority order based on my goals and deadlines
 3. Recommended break intervals
@@ -506,6 +512,9 @@ Format your response with clear numbered headings and bullet points. Start each 
     if (provider === 'gemini') {
       return !!this.geminiApiKey;
     }
+    if (provider === 'groq') {
+      return !!this.groqApiKey;
+    }
     return false;
   }
 
@@ -524,6 +533,20 @@ Format your response with clear numbered headings and bullet points. Start each 
         response = await axios.post(url, {
           contents: [{ parts: [{ text: 'Hello' }] }]
         });
+      } else if (providerToTest === 'groq') {
+        response = await axios.post(
+          this.baseUrls.groq,
+          {
+            model: model,
+            messages: [{ role: 'user', content: 'Hello' }]
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${this.groqApiKey}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
       }
 
       if (response.status === 200) {
@@ -562,50 +585,6 @@ Format your response with clear numbered headings and bullet points. Start each 
 
     const response = await this.generateResponse(prompt, context);
     return response;
-  }
-
-  async getTimetableObservations(schedule) {
-    const prompt = `
-      Analyze the following class schedule and provide a brief, human-readable summary of the user's weekly schedule. 
-      The summary should highlight the busiest days and any large gaps between classes.
-
-      Schedule:
-      ${JSON.stringify(schedule, null, 2)}
-    `;
-
-    return await this.generateResponse(prompt);
-  }
-
-  async extractTimetable(imageDataUrl) {
-    const prompt = `
-      You are an extremely accurate AI designed to extract structured data from images. Your primary goal is to precisely extract class schedules from timetable images.
-
-      Analyze the following timetable image with high accuracy and extract the class schedule. The output must be a JSON array of objects, where each object represents a single class session.
-
-      **Instructions:**
-      1. Carefully identify each class, its subject, the day of the week, the start time, and the end time.
-      2. Pay close attention to the structure of the table, including merged cells.
-      3. Handle different time formats (e.g., 10am, 14:30) and convert them to HH:MM format (24-hour clock).
-      4. If a class occurs on multiple days at the same time, create a separate JSON object for each day.
-      5. The final output must be only the JSON array, with no other text before or after it.
-
-      **JSON Structure Example:**
-      [
-        { "subject": "Mathematics 101", "day": "Monday", "startTime": "10:00", "endTime": "11:00" },
-        { "subject": "History of Art", "day": "Tuesday", "startTime": "14:30", "endTime": "16:00" },
-        { "subject": "History of Art", "day": "Thursday", "startTime": "14:30", "endTime": "16:00" }
-      ]
-    `;
-
-    const response = await this.generateResponse(prompt, {}, imageDataUrl);
-    try {
-      const jsonString = response.substring(response.indexOf('['), response.lastIndexOf(']') + 1);
-      const schedule = JSON.parse(jsonString);
-      return schedule;
-    } catch (e) {
-      console.error('Error parsing timetable from AI response:', e);
-      return [];
-    }
   }
 
   extractSubtopicsFromStructure(structure) {
@@ -652,12 +631,11 @@ Format your response with clear numbered headings and bullet points. Start each 
 }
 
 
-  async getRecommendations(subjects, studySessions, dailyGoals, classSchedule) {
+  async getRecommendations(subjects, studySessions, dailyGoals) {
     const context = {
       subjects,
       studySessions,
       dailyGoals,
-      classSchedule,
       currentTime: new Date().toISOString()
     };
 
