@@ -1,120 +1,281 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import { supabase } from '../supabaseClient';
+import { useAuth } from './AuthContext';
 
 export const SubjectsContext = createContext();
 
 export const SubjectsProvider = ({ children }) => {
-  // Load data from localStorage or use default empty arrays
-  const [subjects, setSubjects] = useState(() => {
-    const savedSubjects = localStorage.getItem('subjects');
-    return savedSubjects ? JSON.parse(savedSubjects) : [];
-  });
+  const { user } = useAuth();
+  const [subjects, setSubjects] = useState([]);
+  const [studySessions, setStudySessions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [studySessions, setStudySessions] = useState(() => {
-    const savedSessions = localStorage.getItem('studySessions');
-    return savedSessions ? JSON.parse(savedSessions) : [];
-  });
+  const fetchData = async () => {
+    if (user) {
+      setLoading(true);
+      
+      const { data: subjectsData, error: subjectsError } = await supabase
+        .from('subjects')
+        .select('*, tasks(*), blogs(*), tests(*), attachments(*)')
+        .eq('user_id', user.id);
 
-  // Save to localStorage whenever data changes
+      if (subjectsError) console.error('Error fetching subjects:', subjectsError);
+      else setSubjects(subjectsData || []);
+
+      const { data: sessionsData, error: sessionsError } = await supabase
+        .from('study_sessions')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      if (sessionsError) console.error('Error fetching study sessions:', sessionsError);
+      else setStudySessions(sessionsData || []);
+
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('timetable_image, class_schedule')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) console.error('Error fetching profile:', profileError);
+      else {
+        setTimetableImage(profileData?.timetable_image);
+        setClassSchedule(profileData?.class_schedule || []);
+      }
+
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    localStorage.setItem('subjects', JSON.stringify(subjects));
-  }, [subjects]);
+    fetchData();
+  }, [user]);
 
-  useEffect(() => {
-    localStorage.setItem('studySessions', JSON.stringify(studySessions));
-  }, [studySessions]);
+  const addStudySession = async (session) => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('study_sessions')
+      .insert([{ ...session, user_id: user.id }])
+      .select()
+      .single();
+    if (error) console.error('Error adding study session:', error);
+    else setStudySessions([...studySessions, data]);
+  };
 
-  // Add a new subject
-  const addSubject = (subject) => {
-    const newSubject = {
-      id: Date.now().toString(),
-      name: subject.name,
-      color: subject.color || '#3f51b5',
-      tasks: [],
-      dailyGoalHours: subject.dailyGoalHours || 1,
-      notes: subject.notes || '',
-      deadline: subject.deadline || null,
-      createdAt: new Date().toISOString(),
-    };
-    setSubjects([...subjects, newSubject]);
-    return newSubject.id;
+  const deleteStudySession = async (sessionId) => {
+    if (!user) return;
+    const { error } = await supabase.from('study_sessions').delete().eq('id', sessionId);
+    if (error) console.error('Error deleting study session:', error);
+    else setStudySessions(studySessions.filter(s => s.id !== sessionId));
+  };
+
+  // Add a new test to a subject
+  const addTest = async (subjectId, test) => {
+    if (!user) return;
+    const { error } = await supabase.from('tests').insert([{ ...test, subject_id: subjectId, user_id: user.id }]);
+    if (error) console.error('Error adding test:', error);
+    else fetchData();
   };
 
   // Update an existing subject
-  const updateSubject = (id, updatedData) => {
-    setSubjects(subjects.map(subject => 
-      subject.id === id ? { ...subject, ...updatedData } : subject
-    ));
+  const updateSubject = async (id, updatedData) => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('subjects')
+      .update(updatedData)
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .select();
+
+    if (error) {
+      console.error('Error updating subject:', error);
+    } else if (data) {
+      setSubjects(subjects.map(subject => (subject.id === id ? data[0] : subject)));
+    }
   };
 
   // Delete a subject
-  const deleteSubject = (id) => {
-    setSubjects(subjects.filter(subject => subject.id !== id));
-    // Also delete related study sessions
-    setStudySessions(studySessions.filter(session => session.subjectId !== id));
+  const deleteSubject = async (id) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from('subjects')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error deleting subject:', error);
+    } else {
+      setSubjects(subjects.filter(subject => subject.id !== id));
+    }
+  };
+
+  // Add a blog to a subject
+  const addBlog = async (subjectId, blog) => {
+    if (!user) return;
+    const { error } = await supabase.from('blogs').insert([{ ...blog, subject_id: subjectId, user_id: user.id }]);
+    if (error) console.error('Error adding blog:', error);
+    else fetchData();
+  };
+
+  const updateBlog = async (subjectId, updatedBlog) => {
+    if (!user) return;
+    const { error } = await supabase.from('blogs').update(updatedBlog).eq('id', updatedBlog.id);
+    if (error) console.error('Error updating blog:', error);
+    else fetchData();
+  };
+
+  const deleteBlog = async (subjectId, blogId) => {
+    if (!user) return;
+    const { error } = await supabase.from('blogs').delete().eq('id', blogId);
+    if (error) console.error('Error deleting blog:', error);
+    else fetchData();
+  };
+
+  // Delete a test from a subject
+  const deleteTest = async (subjectId, testId) => {
+    if (!user) return;
+    const { error } = await supabase.from('tests').delete().eq('id', testId);
+    if (error) console.error('Error deleting test:', error);
+    else fetchData();
   };
 
   // Add a task to a subject
-  const addTask = (subjectId, task) => {
-    setSubjects(subjects.map(subject => {
-      if (subject.id === subjectId) {
-        const newTask = {
-          id: Date.now().toString(),
-          name: task.name,
-          completed: false,
-          createdAt: new Date().toISOString(),
-        };
-        return {
-          ...subject,
-          tasks: [...subject.tasks, newTask]
-        };
-      }
-      return subject;
-    }));
+  const addTask = async (subjectId, task) => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('tasks')
+      .insert([{ ...task, subject_id: subjectId, user_id: user.id }])
+      .select();
+
+    if (error) {
+      console.error('Error adding task:', error);
+    } else if (data) {
+      fetchData(); // Refetch all data to update subjects and tasks
+    }
   };
 
-  // Toggle task completion status
-  const toggleTaskCompletion = (subjectId, taskId) => {
-    setSubjects(subjects.map(subject => {
-      if (subject.id === subjectId) {
-        return {
-          ...subject,
-          tasks: subject.tasks.map(task => 
-            task.id === taskId ? { ...task, completed: !task.completed } : task
-          )
-        };
-      }
-      return subject;
-    }));
+  const addMultipleTasks = async (subjectId, tasks) => {
+    if (!user) return;
+    const tasksWithIds = tasks.map(t => ({ ...t, subject_id: subjectId, user_id: user.id }));
+    const { error } = await supabase.from('tasks').insert(tasksWithIds);
+
+    if (error) {
+      console.error('Error adding multiple tasks:', error);
+    } else {
+      fetchData();
+    }
   };
 
-  // Delete a task
-  const deleteTask = (subjectId, taskId) => {
-    setSubjects(subjects.map(subject => {
-      if (subject.id === subjectId) {
-        return {
-          ...subject,
-          tasks: subject.tasks.filter(task => task.id !== taskId)
-        };
-      }
-      return subject;
-    }));
+  const setTaskFields = async (subjectId, taskId, partial) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from('tasks')
+      .update(partial)
+      .eq('id', taskId)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error updating task:', error);
+    } else {
+      fetchData();
+    }
+  };
+
+  const toggleTaskCompletion = async (subjectId, taskId) => {
+    if (!user) return;
+    // First, get the current task to toggle its `completed` status
+    const task = subjects.find(s => s.id === subjectId)?.tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const { error } = await supabase
+      .from('tasks')
+      .update({ completed: !task.completed })
+      .eq('id', taskId)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error toggling task:', error);
+    } else {
+      fetchData();
+    }
+  };
+
+  const deleteTask = async (subjectId, taskId) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', taskId)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error deleting task:', error);
+    } else {
+      fetchData();
+    }
+  };
+
+  // Add an attachment to a subject
+  const addAttachment = async (subjectId, attachment, file) => {
+    if (!user) return;
+    const { data, error } = await supabase.storage.from('attachments').upload(`${user.id}/${subjectId}/${file.name}`, file);
+    if (error) {
+      console.error('Error uploading attachment:', error);
+      return;
+    }
+    
+    const { error: dbError } = await supabase.from('attachments').insert([{
+      subject_id: subjectId,
+      user_id: user.id,
+      name: file.name,
+      path: data.path
+    }]);
+
+    if (dbError) console.error('Error saving attachment metadata:', dbError);
+    else fetchData();
+  };
+
+  const deleteAttachment = async (subjectId, attachmentId, path) => {
+    if (!user) return;
+    const { error: storageError } = await supabase.storage.from('attachments').remove([path]);
+    if (storageError) console.error('Error deleting attachment from storage:', storageError);
+
+    const { error: dbError } = await supabase.from('attachments').delete().eq('id', attachmentId);
+    if (dbError) console.error('Error deleting attachment metadata:', dbError);
+    else fetchData();
   };
 
   // Add a study session
-  const addStudySession = (session) => {
-    const newSession = {
-      id: Date.now().toString(),
-      subjectId: session.subjectId,
-      date: session.date || new Date().toISOString(),
-      duration: session.duration, // in minutes
-      notes: session.notes || '',
-    };
-    setStudySessions([...studySessions, newSession]);
+  const setTimetableImage = async (image) => {
+    if (!user) return;
+    const { error } = await supabase.from('profiles').update({ timetable_image: image }).eq('id', user.id);
+    if (error) console.error('Error saving timetable image:', error);
+    else setTimetableImage(image);
   };
 
-  // Delete a study session
-  const deleteStudySession = (sessionId) => {
-    setStudySessions(studySessions.filter(session => session.id !== sessionId));
+  const setClassSchedule = async (schedule) => {
+    if (!user) return;
+    const { error } = await supabase.from('profiles').update({ class_schedule: schedule }).eq('id', user.id);
+    if (error) console.error('Error saving class schedule:', error);
+    else setClassSchedule(schedule);
+  };
+
+  const addStudySession = async (session) => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('study_sessions')
+      .insert([{ ...session, user_id: user.id }])
+      .select()
+      .single();
+    if (error) console.error('Error adding study session:', error);
+    else setStudySessions([...studySessions, data]);
+  };
+
+  const deleteStudySession = async (sessionId) => {
+    if (!user) return;
+    const { error } = await supabase.from('study_sessions').delete().eq('id', sessionId);
+    if (error) console.error('Error deleting study session:', error);
+    else setStudySessions(studySessions.filter(s => s.id !== sessionId));
   };
 
   // Get total study hours for a subject
@@ -181,17 +342,40 @@ export const SubjectsProvider = ({ children }) => {
     const completedTasks = subject.tasks.filter(task => task.completed).length;
     return (completedTasks / subject.tasks.length) * 100;
   };
+  
+  // Get recent study sessions for a given number of days
+  const getRecentStudySessions = (days = 7) => {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    
+    return studySessions
+      .filter(session => new Date(session.date) >= cutoffDate)
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+  };
 
   return (
     <SubjectsContext.Provider value={{
       subjects,
       studySessions,
+      timetableImage,
+      classSchedule,
+      setTimetableImage,
+      setClassSchedule,
       addSubject,
       updateSubject,
       deleteSubject,
+      addBlog,
+      updateBlog,
+      deleteBlog,
+      addTest,
+      deleteTest, // Add this line
       addTask,
+      addMultipleTasks,
+      setTaskFields,
       toggleTaskCompletion,
       deleteTask,
+      addAttachment, // Add this line
+      deleteAttachment,
       addStudySession,
       deleteStudySession,
       getTotalHoursForSubject,
@@ -199,8 +383,11 @@ export const SubjectsProvider = ({ children }) => {
       getSessionsForDay,
       checkDailyGoals,
       getSubjectProgress,
+      getRecentStudySessions,
     }}>
       {children}
     </SubjectsContext.Provider>
   );
 };
+
+export const useSubjects = () => useContext(SubjectsContext);

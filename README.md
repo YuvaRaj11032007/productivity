@@ -1,70 +1,103 @@
-# Getting Started with Create React App
+# Preparation Tracker
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A comprehensive study progress tracking application to help you manage your study goals, track your progress, and visualize your achievements.
 
-## Available Scripts
+## 🚀 Features
 
-In the project directory, you can run:
+- **Subject Management**: Create, edit, and organize your study subjects
+- **Study Timer**: Track your study sessions with a built-in timer
+- **Goal Setting**: Set daily, weekly, and monthly study goals
+- **Progress Visualization**: View your progress with interactive charts and statistics
+- **Calendar View**: See your study sessions on a calendar
+- **Dark Mode**: Toggle between light and dark themes
+- **Single Instance**: App ensures only one instance runs at a time, preventing duplicate tabs
 
-### `npm start`
+## 📋 Prerequisites
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- Node.js (version 16.x or higher)
+- npm (version 8.x or higher)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 🔧 Installation
 
-### `npm test`
+1. Clone this repository or download the source code
+2. Navigate to the project directory
+3. Install dependencies:
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```bash
+npm install
+```
 
-### `npm run build`
+## 🚀 Getting Started
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Running the Application
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+To start the application, run:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```bash
+npm start
+```
 
-### `npm run eject`
+This will launch the app in development mode and open it in your browser. The app uses a single-instance mechanism to ensure only one instance runs at a time.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+If the app is already running, the command will detect it and focus the existing browser tab instead of opening a new one.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+For development purposes, if you need to bypass the single-instance check, you can use:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```bash
+npm run start:direct
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Creating a Desktop Shortcut
 
-## Learn More
+For easy access, you can create a desktop shortcut:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+1. Double-click the `create_shortcut.bat` file in the project root directory
+2. Follow the on-screen instructions
+3. A shortcut will be created on your desktop
+4. Double-click the shortcut to launch the application
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 🔍 Troubleshooting
 
-### Code Splitting
+If you encounter any issues:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Package Version Conflicts
 
-### Analyzing the Bundle Size
+If you see errors related to incompatible package versions:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```bash
+npm install --force
+```
 
-### Making a Progressive Web App
+### Port Already in Use
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+If port 3000 is already in use, you can specify a different port:
 
-### Advanced Configuration
+```bash
+set PORT=3001 && npm start
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+### Browser Not Opening Automatically
 
-### Deployment
+If the browser doesn't open automatically, manually navigate to:
+[http://localhost:3000](http://localhost:3000)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+### Multiple Instances or Tabs
 
-### `npm run build` fails to minify
+The app is designed to run as a single instance. If you're experiencing issues with multiple tabs:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+1. Close all browser tabs with the app
+2. Delete the `.app-lock` file in the project directory if it exists
+3. Restart the app using the desktop shortcut or `npm start`
+
+For more details on the single-instance mechanism, see [SINGLE_INSTANCE.md](./SINGLE_INSTANCE.md)
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgements
+
+- React.js
+- Material-UI
+- Chart.js
+- date-fns
