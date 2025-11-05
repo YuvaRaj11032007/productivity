@@ -9,6 +9,8 @@ export const SubjectsProvider = ({ children }) => {
   const [subjects, setSubjects] = useState([]);
   const [studySessions, setStudySessions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [timetableImage, setTimetableImage] = useState(null);
+  const [classSchedule, setClassSchedule] = useState([]);
 
   const fetchData = async () => {
     if (user) {
@@ -49,6 +51,20 @@ export const SubjectsProvider = ({ children }) => {
   useEffect(() => {
     fetchData();
   }, [user]);
+
+  const addSubject = async (subject) => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('subjects')
+      .insert([{ ...subject, user_id: user.id }])
+      .select('*, tasks(*), blogs(*), tests(*), attachments(*)')
+      .single();
+    if (error) {
+      console.error('Error adding subject:', error);
+    } else if (data) {
+      setSubjects([...subjects, data]);
+    }
+  };
 
   const addStudySession = async (session) => {
     if (!user) return;
@@ -245,37 +261,18 @@ export const SubjectsProvider = ({ children }) => {
     else fetchData();
   };
 
-  // Add a study session
-  const setTimetableImage = async (image) => {
+  const updateTimetableImage = async (image) => {
     if (!user) return;
     const { error } = await supabase.from('profiles').update({ timetable_image: image }).eq('id', user.id);
     if (error) console.error('Error saving timetable image:', error);
     else setTimetableImage(image);
   };
 
-  const setClassSchedule = async (schedule) => {
+  const updateClassSchedule = async (schedule) => {
     if (!user) return;
     const { error } = await supabase.from('profiles').update({ class_schedule: schedule }).eq('id', user.id);
     if (error) console.error('Error saving class schedule:', error);
     else setClassSchedule(schedule);
-  };
-
-  const addStudySession = async (session) => {
-    if (!user) return;
-    const { data, error } = await supabase
-      .from('study_sessions')
-      .insert([{ ...session, user_id: user.id }])
-      .select()
-      .single();
-    if (error) console.error('Error adding study session:', error);
-    else setStudySessions([...studySessions, data]);
-  };
-
-  const deleteStudySession = async (sessionId) => {
-    if (!user) return;
-    const { error } = await supabase.from('study_sessions').delete().eq('id', sessionId);
-    if (error) console.error('Error deleting study session:', error);
-    else setStudySessions(studySessions.filter(s => s.id !== sessionId));
   };
 
   // Get total study hours for a subject
@@ -359,8 +356,8 @@ export const SubjectsProvider = ({ children }) => {
       studySessions,
       timetableImage,
       classSchedule,
-      setTimetableImage,
-      setClassSchedule,
+      setTimetableImage: updateTimetableImage,
+      setClassSchedule: updateClassSchedule,
       addSubject,
       updateSubject,
       deleteSubject,
