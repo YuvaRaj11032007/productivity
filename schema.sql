@@ -9,6 +9,7 @@ CREATE TABLE public.subjects (
   id SERIAL PRIMARY KEY,
   user_id UUID REFERENCES public.profiles(id),
   name TEXT NOT NULL,
+  category TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
