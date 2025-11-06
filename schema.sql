@@ -10,6 +10,7 @@ CREATE TABLE public.subjects (
   user_id UUID REFERENCES public.profiles(id),
   name TEXT NOT NULL,
   category TEXT,
+  color TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 

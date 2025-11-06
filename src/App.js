@@ -28,34 +28,39 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 function MainApp() {
   const { user } = useAuth();
 
-  return user ? (
-    <AppProvider>
-      <SubjectsProvider>
-        <TimerProvider>
-          <AIProvider>
-            <Router>
-              <div className="App">
-                <Navbar />
-                <div className="container">
-                  <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/subjects" element={<Dashboard />} />
-                    <Route path="/subject/:id" element={<SubjectDetail />} />
-                    <Route path="/calendar" element={<Calendar />} />
-                    <Route path="/statistics" element={<Statistics />} />
-                    <Route path="/blogs" element={<Blogs />} />
-                    <Route path="/settings" element={<Settings />} />
-                  </Routes>
-                </div>
-                <AIAssistant />
-              </div>
-            </Router>
-          </AIProvider>
-        </TimerProvider>
-      </SubjectsProvider>
-    </AppProvider>
-  ) : (
-    <Auth />
+  return (
+    <>
+      <div style={{ display: user ? 'block' : 'none' }}>
+        <AppProvider>
+          <SubjectsProvider>
+            <TimerProvider>
+              <AIProvider>
+                <Router>
+                  <div className="App">
+                    <Navbar />
+                    <div className="container">
+                      <Routes>
+                        <Route path="/" element={<Dashboard />} />
+                        <Route path="/subjects" element={<Dashboard />} />
+                        <Route path="/subject/:id" element={<SubjectDetail />} />
+                        <Route path="/calendar" element={<Calendar />} />
+                        <Route path="/statistics" element={<Statistics />} />
+                        <Route path="/blogs" element={<Blogs />} />
+                        <Route path="/settings" element={<Settings />} />
+                      </Routes>
+                    </div>
+                    <AIAssistant />
+                  </div>
+                </Router>
+              </AIProvider>
+            </TimerProvider>
+          </SubjectsProvider>
+        </AppProvider>
+      </div>
+      <div style={{ display: user ? 'none' : 'block' }} inert={user ? 'true' : undefined}>
+        <Auth />
+      </div>
+    </>
   );
 }
 
