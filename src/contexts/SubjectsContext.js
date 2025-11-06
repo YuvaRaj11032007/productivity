@@ -54,15 +54,13 @@ export const SubjectsProvider = ({ children }) => {
 
   const addSubject = async (subject) => {
     if (!user) return;
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('subjects')
-      .insert([{ ...subject, user_id: user.id }])
-      .select('*, tasks(*), blogs(*), tests(*), attachments(*)')
-      .single();
+      .insert([{ ...subject, user_id: user.id }]);
     if (error) {
       console.error('Error adding subject:', error);
-    } else if (data) {
-      setSubjects([...subjects, data]);
+    } else {
+      fetchData();
     }
   };
 
