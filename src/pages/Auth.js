@@ -28,11 +28,16 @@ const Auth = () => {
   const handleAuth = async (event) => {
     event.preventDefault();
     setLoading(true);
-    const { error } = isLogin
+    const { data, error } = isLogin
       ? await supabase.auth.signInWithPassword({ email, password })
       : await supabase.auth.signUp({ email, password });
 
-    if (error) {
+    if (!isLogin && data.user && !error) {
+      const { error: profileError } = await supabase.from('profiles').insert({ id: data.user.id });
+      if (profileError) {
+        alert(profileError.message);
+      }
+    } else if (error) {
       alert(error.error_description || error.message);
     }
     // Session is handled by onAuthStateChange in App.js
