@@ -32,14 +32,9 @@ const Auth = () => {
       ? await supabase.auth.signInWithPassword({ email, password })
       : await supabase.auth.signUp({ email, password });
 
-    // if (!isLogin && data.user && !error) {
-    //   const { error: profileError } = await supabase.from('profiles').insert({ id: data.user.id });
-    //   if (profileError) {
-    //     alert(profileError.message);
-    //   }
-    // } else if (error) {
-    //   alert(error.error_description || error.message);
-    // }
+    if (error) {
+      alert(error.error_description || error.message);
+    }
     // Session is handled by onAuthStateChange in App.js
     setLoading(false);
   };
