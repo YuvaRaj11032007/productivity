@@ -156,8 +156,8 @@ const Dashboard = () => {
     setSelectedSubjectId(null);
   };
 
-  const handleCardClick = (id) => {
-    navigate(`/subject/${id}`);
+  const handleCardClick = (subjectId) => {
+    navigate(`/subject/${subjectId}`);
   };
 
   const colorOptions = [
