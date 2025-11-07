@@ -54,6 +54,7 @@ const SubjectDetail = () => {
   } = useContext(SubjectsContext);
 
   const [subject, setSubject] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [newTask, setNewTask] = useState('');
   const [openSessionDialog, setOpenSessionDialog] = useState(false);
   const [openNotesDialog, setOpenNotesDialog] = useState(false);
@@ -153,7 +154,8 @@ const SubjectDetail = () => {
     if (foundSubject) {
       setSubject(foundSubject);
       setSubjectNotes(foundSubject.notes || '');
-    } else {
+      setLoading(false);
+    } else if (subjects.length > 0) { // only navigate if subjects have loaded
       navigate('/');
     }
   }, [id, subjects, navigate]);
@@ -363,6 +365,10 @@ const SubjectDetail = () => {
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
+
+  if (loading) {
+    return <CircularProgress />;
+  }
 
   if (!subject) return null;
 
