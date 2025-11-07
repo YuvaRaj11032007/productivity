@@ -42,7 +42,7 @@ function MainApp() {
                       <Routes>
                         <Route path="/" element={<Dashboard />} />
                         <Route path="/subjects" element={<Dashboard />} />
-                        <Route path="/subject/:id" element={<SubjectDetail />} />
+                        <Route path="/subject/:subjectId" element={<SubjectDetail />} />
                         <Route path="/calendar" element={<Calendar />} />
                         <Route path="/statistics" element={<Statistics />} />
                         <Route path="/blogs" element={<Blogs />} />

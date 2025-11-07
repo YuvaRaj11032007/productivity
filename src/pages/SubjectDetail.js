@@ -34,7 +34,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import { extractTextFromPdf } from '../services/fileReader';
 
 const SubjectDetail = () => {
-  const { id } = useParams();
+  const { subjectId } = useParams();
   const navigate = useNavigate();
   const {
     subjects,
@@ -143,14 +143,14 @@ const SubjectDetail = () => {
       console.log('Node is locked!');
       return;
     }
-    toggleTaskCompletion(id, node.id);
-  }, [id, toggleTaskCompletion]);
+    toggleTaskCompletion(subjectId, node.id);
+  }, [subjectId, toggleTaskCompletion]);
   */
 
   const completedTasks = subject?.tasks?.filter(t => t.completed) || [];
 
   useEffect(() => {
-    const foundSubject = subjects.find(s => s.id === id);
+    const foundSubject = subjects.find(s => s.id === subjectId);
     if (foundSubject) {
       setSubject(foundSubject);
       setSubjectNotes(foundSubject.notes || '');
@@ -158,15 +158,15 @@ const SubjectDetail = () => {
     } else if (subjects.length > 0) { // only navigate if subjects have loaded
       navigate('/');
     }
-  }, [id, subjects, navigate]);
+  }, [subjectId, subjects, navigate]);
 
   const filteredSessions = studySessions.filter(session => 
-    session.subjectId === id
+    session.subjectId === subjectId
   ).sort((a, b) => new Date(b.date) - new Date(a.date));
 
   const handleAddTask = () => {
     if (newTask.trim()) {
-      addTask(id, { name: newTask });
+      addTask(subjectId, { name: newTask });
       setNewTask('');
     }
   };
@@ -207,7 +207,7 @@ const SubjectDetail = () => {
       
       if (aiTasks.length > 0) {
         console.log(`Adding ${aiTasks.length} AI-generated tasks to subject ${subject.name}`);
-        addMultipleTasks(id, aiTasks);
+        addMultipleTasks(subjectId, aiTasks);
         console.log('AI tasks added successfully');
       } else {
         console.log('AI parsing failed, using fallback tasks');
@@ -229,7 +229,7 @@ const SubjectDetail = () => {
           { name: 'Revision and Final Preparation', estimatedMinutes: 120, dueDate: null },
           { name: 'Comprehensive Review and Practice', estimatedMinutes: 150, dueDate: null }
         ];
-        addMultipleTasks(id, fallbackTasks);
+        addMultipleTasks(subjectId, fallbackTasks);
         console.log('Fallback tasks added successfully');
       }
       
@@ -253,12 +253,12 @@ const SubjectDetail = () => {
         { name: 'Revision and Final Preparation', estimatedMinutes: 120, dueDate: null },
         { name: 'Comprehensive Review and Practice', estimatedMinutes: 150, dueDate: null }
       ];
-      addMultipleTasks(id, fallbackTasks);
+      addMultipleTasks(subjectId, fallbackTasks);
       console.log('Fallback tasks added after AI failure');
     } finally {
       setIsGenerating(false);
     }
-  }, [subject, addMultipleTasks, id]);
+  }, [subject, addMultipleTasks, subjectId]);
 
   const handleAutoSchedule = useCallback(() => {
     if (!subject) return;
@@ -276,17 +276,17 @@ const SubjectDetail = () => {
       });
       
       // Update all tasks in a single call
-      updateSubject(id, { tasks: nextTasks });
+      updateSubject(subjectId, { tasks: nextTasks });
     } finally {
       setIsScheduling(false);
     }
-  }, [subject, id, updateSubject]);
+  }, [subject, subjectId, updateSubject]);
 
   const handleMoveTask = useCallback((task, destIsoKey) => {
     const newDueDate = destIsoKey === 'unplanned' ? null : destIsoKey;
     const nextTasks = subject.tasks.map(t => t.id === task.id ? { ...t, dueDate: newDueDate } : t);
-    updateSubject(id, { tasks: nextTasks });
-  }, [subject, id, updateSubject]);
+    updateSubject(subjectId, { tasks: nextTasks });
+  }, [subject, subjectId, updateSubject]);
 
   const handleOpenSessionDialog = () => {
     setOpenSessionDialog(true);
@@ -310,7 +310,7 @@ const SubjectDetail = () => {
 
   const handleAddSession = () => {
     addStudySession({
-      subjectId: id,
+      subjectId: subjectId,
       duration: Number(newSession.duration),
       notes: newSession.notes,
       date: new Date().toISOString()
@@ -349,13 +349,13 @@ const SubjectDetail = () => {
   };
 
   const handleSaveNotes = () => {
-    updateSubject(id, { notes: subjectNotes });
+    updateSubject(subjectId, { notes: subjectNotes });
     if (newAttachment && newAttachmentData) {
       const attachment = {
         name: newAttachment.name,
         path: newAttachmentData
       }
-      addAttachment(id, attachment);
+      addAttachment(subjectId, attachment);
       setNewAttachment(null);
       setNewAttachmentData(null);
     }
@@ -372,8 +372,8 @@ const SubjectDetail = () => {
 
   if (!subject) return null;
 
-  const progress = getSubjectProgress(id);
-  const totalHours = getTotalHoursForSubject(id);
+  const progress = getSubjectProgress(subjectId);
+  const totalHours = getTotalHoursForSubject(subjectId);
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -477,15 +477,15 @@ const SubjectDetail = () => {
                         </Button>
                       </Box>
                     </Box>
-                    <TaskList subjectId={id} />
+                    <TaskList subjectId={subjectId} />
                   </Paper>
                   <Paper sx={{ p: 2, mb: 3 }}>
                     <DailyPlannerBoard
                       days={7}
                       subjects={subjects}
-                      subjectId={id}
+                      subjectId={subjectId}
                       onMoveTask={handleMoveTask}
-                      onToggleTask={(t) => toggleTaskCompletion(id, t.id)}
+                      onToggleTask={(t) => toggleTaskCompletion(subjectId, t.id)}
                     />
                   </Paper>
                 </>
@@ -499,12 +499,12 @@ const SubjectDetail = () => {
                   <Divider sx={{ mb: 3 }} />
               
                   <ModernTimer 
-                    subjectId={id}
+                    subjectId={subjectId}
                     subjectName={subject.name}
                     subjectColor={subject.color}
                     onSessionComplete={(sessionData) => {
                       addStudySession({
-                        subjectId: id,
+                        subjectId: subjectId,
                         duration: sessionData.duration * 60, // Convert hours to minutes
                         notes: sessionData.notes,
                         date: new Date().toISOString()
@@ -664,7 +664,7 @@ const SubjectDetail = () => {
             {(subject.attachments || []).map(attachment => (
               <ListItem key={attachment.id} secondaryAction={ 
                 <>
-                  <IconButton edge="end" aria-label="delete" onClick={() => deleteAttachment(id, attachment.id)}>
+                  <IconButton edge="end" aria-label="delete" onClick={() => deleteAttachment(subjectId, attachment.id)}>
                     <DeleteIcon />
                   </IconButton>
                 </>
