@@ -157,6 +157,7 @@ const Dashboard = () => {
   };
 
   const handleCardClick = (subjectId) => {
+    console.log('Navigating to subject with ID:', subjectId);
     navigate(`/subject/${subjectId}`);
   };
 

@@ -35,6 +35,7 @@ import { extractTextFromPdf } from '../services/fileReader';
 
 const SubjectDetail = () => {
   const { subjectId } = useParams();
+  console.log('SubjectDetail component rendered with subjectId:', subjectId);
   const navigate = useNavigate();
   const {
     subjects,
