@@ -30,7 +30,7 @@ const PdfViewer = ({ open, onClose, file }) => {
   const handleZoomOut = () => setZoom(prevZoom => Math.max(prevZoom - 0.2, 0.5));
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth fullScreen={fullScreen}>
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth fullScreen={fullScreen} closeAfterTransition={false}>
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h6" noWrap sx={{ flex: 1 }}>
           {file?.name}

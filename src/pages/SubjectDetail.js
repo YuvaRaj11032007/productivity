@@ -593,7 +593,7 @@ const SubjectDetail = () => {
               )}
             </Grid>
           </Grid>
-      <Dialog open={openSessionDialog} onClose={handleCloseSessionDialog} maxWidth="sm" fullWidth>
+      <Dialog open={openSessionDialog} onClose={handleCloseSessionDialog} maxWidth="sm" fullWidth closeAfterTransition={false}>
         <DialogTitle>Log Study Session</DialogTitle>
         <DialogContent>
           <TextField
@@ -630,7 +630,7 @@ const SubjectDetail = () => {
       </Dialog>
 
       {/* Notes Dialog */}
-      <Dialog open={openNotesDialog} onClose={handleCloseNotesDialog} maxWidth="sm" fullWidth>
+      <Dialog open={openNotesDialog} onClose={handleCloseNotesDialog} maxWidth="sm" fullWidth closeAfterTransition={false}>
         <DialogTitle>Subject Notes</DialogTitle>
         <DialogContent>
           <TextField
