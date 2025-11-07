@@ -20,11 +20,10 @@ import aiService from '../services/aiService';
 
 const CalendarView = () => {
   const { subjects, getSessionsForDay, getTotalHoursForDay, timetableImage, setTimetableImage, classSchedule, setClassSchedule } = useContext(SubjectsContext);
-  const { state: aiState } = useAI();
   const [selectedDate, setSelectedDate] = useState(new Date());
       const [loading, setLoading] = useState(false);
       const [error, setError] = useState('');
-      const [timetableObservations, setTimetableObservations] = useState('');  
+        
     const handleDateChange = (date) => {
       setSelectedDate(date);
     };
@@ -36,7 +35,7 @@ const CalendarView = () => {
           reader.onloadend = () => {
             setTimetableImage(reader.result);
             setClassSchedule([]);
-            setTimetableObservations('');
+            
           };
           reader.readAsDataURL(file);
         }
@@ -60,7 +59,7 @@ const CalendarView = () => {
     
               const observations = await aiService.getTimetableObservations(schedule);
     
-              setTimetableObservations(observations);
+              
     
             }
     
@@ -84,7 +83,7 @@ const CalendarView = () => {
     
           setClassSchedule([]);
     
-          setTimetableObservations('');
+          
     
         };
     

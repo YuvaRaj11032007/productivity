@@ -1,8 +1,8 @@
 import React, { useState, useContext } from 'react';
-import { Box, Typography, Button, Paper, TextField, RadioGroup, FormControlLabel, Radio, Divider, Alert, MenuItem, Select, InputLabel, FormControl, CircularProgress } from '@mui/material';
+import { Box, Typography, Button, Paper, TextField, RadioGroup, FormControlLabel, Radio, Alert, MenuItem, Select, InputLabel, FormControl, CircularProgress } from '@mui/material';
 import { SubjectsContext } from '../contexts/SubjectsContext';
 
-import { extractTextFromPdf } from '../services/fileReader';
+
 
 // This component expects: subject, completedTasks, aiService
 const TestFeature = ({ subject, completedTasks, aiService, onMasteryUpdate }) => {

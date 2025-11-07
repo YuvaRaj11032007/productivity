@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { SubjectsContext } from '../contexts/SubjectsContext';
 import TaskItem from './TaskItem';
-import { Chip, TextField, Button, Box, Typography, LinearProgress } from '@mui/material';
+import { TextField, Button, Box, Typography, LinearProgress } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import TimerIcon from '@mui/icons-material/Timer';
 
@@ -10,7 +10,6 @@ function TaskList({ subjectId }) {
   const subject = subjects.find(s => s.id === subjectId);
 
   const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [isAddingTask, setIsAddingTask] = useState(false);
 
   const handleAddTask = (e) => {
     e.preventDefault();

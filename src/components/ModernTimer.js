@@ -7,7 +7,6 @@ import {
   TextField,
   Paper,
   IconButton,
-  Tooltip,
   Chip,
   Tabs,
   Tab,
@@ -26,32 +25,22 @@ import {
   useMediaQuery
 } from '@mui/material';
 import {
-  PlayArrow,
-  Pause,
-  Refresh,
   CheckCircle,
   Settings as SettingsIcon,
   Timer as TimerIcon,
   Alarm as AlarmIcon,
-  LocalCafe as BreakIcon,
   Notifications as NotificationsIcon,
-  NotificationsOff as NotificationsOffIcon,
   Assignment as AssignmentIcon,
   Autorenew as AutorenewIcon,
-  Error as ErrorIcon,
-  Warning as WarningIcon,
-  Info as InfoIcon
 } from '@mui/icons-material';
 import { useTimer } from '../contexts/TimerContext';
 
 const ModernTimer = ({ subjectId, onSessionComplete }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { 
     activeTimer, 
     startTimer: contextStartTimer, 
     pauseTimer: contextPauseTimer, 
-    resumeTimer: contextResumeTimer, 
     resetTimer: contextResetTimer, 
     stopTimer: contextStopTimer,
     getElapsedTime,
@@ -181,7 +170,7 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
         handleTimerComplete();
       }
     }
-  }, [time, isRunning, activeTimer, subjectId]);
+  }, [time, isRunning, activeTimer, subjectId, handleTimerComplete]);
 
   // Handle timer completion
   const handleTimerComplete = () => {
@@ -373,7 +362,7 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
     if (settings.notifications) {
       requestNotificationPermission();
     }
-  }, [settings.notifications]);
+  }, [settings.notifications, requestNotificationPermission]);
 
   // Styles for the timer container
   const containerStyles = {

@@ -1,16 +1,14 @@
-import React, { useContext, useState, useEffect, useMemo, useRef } from 'react';
+import React, { useContext, useState, useMemo, useRef } from 'react';
 import { 
   Container, Typography, Box, Paper, Grid, Card, CardContent, 
   Divider, FormControl, InputLabel, Select, MenuItem, Tabs, Tab,
   Button, IconButton, Tooltip, CircularProgress, LinearProgress,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  ToggleButton, ToggleButtonGroup, Chip, Avatar, Badge, Switch,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField,
-  List, ListItem, ListItemText, ListItemIcon, ListItemSecondaryAction,
-  Accordion, AccordionSummary, AccordionDetails, Snackbar, Alert
+  ToggleButton, ToggleButtonGroup, Chip, Avatar, Badge,
+  List, ListItem, ListItemText, ListItemIcon, ListItemSecondaryAction
 } from '@mui/material';
 import { SubjectsContext } from '../contexts/SubjectsContext';
-import { Bar, Pie, Line, Doughnut, Radar, PolarArea, Bubble, Scatter, getElementAtEvent, getElementsAtEvent, getDatasetAtEvent } from 'react-chartjs-2';
+import { Bar, Pie, Line, Doughnut, Radar, PolarArea, getElementAtEvent, getElementsAtEvent, getDatasetAtEvent } from 'react-chartjs-2';
 import { 
   Chart as ChartJS, CategoryScale, LinearScale, BarElement, 
   Title, Tooltip as ChartTooltip, Legend, ArcElement, PointElement, 

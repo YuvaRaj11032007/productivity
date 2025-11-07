@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from './AuthContext';
 
@@ -8,13 +8,11 @@ export const SubjectsProvider = ({ children }) => {
   const { user } = useAuth();
   const [subjects, setSubjects] = useState([]);
   const [studySessions, setStudySessions] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [timetableImage, setTimetableImage] = useState(null);
   const [classSchedule, setClassSchedule] = useState([]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (user) {
-      setLoading(true);
       
       const { data: subjectsData, error: subjectsError } = await supabase
         .from('subjects')
@@ -44,13 +42,13 @@ export const SubjectsProvider = ({ children }) => {
         setClassSchedule(profileData?.class_schedule || []);
       }
 
-      setLoading(false);
+      
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchData();
-  }, [user]);
+  }, [fetchData]);
 
   const addSubject = async (subject) => {
     if (!user) return;

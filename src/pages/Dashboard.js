@@ -6,7 +6,7 @@ import {
   DialogContent, DialogActions, TextField, IconButton,
   MenuItem, Select, InputLabel, FormControl,
   Paper, Chip, Menu, ListItemIcon, ListItemText,
-  Badge, Fab, Drawer
+  Badge
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -16,11 +16,9 @@ import EditIcon from '@mui/icons-material/Edit';
 import CategoryIcon from '@mui/icons-material/Category';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import ViewListIcon from '@mui/icons-material/ViewList';
-import { AutoAwesome as AIIcon } from '@mui/icons-material';
 import { SubjectsContext } from '../contexts/SubjectsContext';
 import { useAI } from '../contexts/AIContext';
 import { useTheme } from '@mui/material/styles';
-import AIAssistant from '../components/AIAssistant';
 
 const Dashboard = () => {
   const { 
@@ -34,8 +32,7 @@ const Dashboard = () => {
     getRecentStudySessions
   } = useContext(SubjectsContext);
   
-  const { state: aiState, toggleAIAssistant, setAIAssistantOpen } = useAI();
-  const theme = useTheme();
+  
   
   const navigate = useNavigate();
   const [openDialog, setOpenDialog] = useState(false);

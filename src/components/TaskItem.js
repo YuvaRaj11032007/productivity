@@ -1,6 +1,5 @@
 import React from 'react';
 import { Chip, Box, Typography, IconButton } from '@mui/material';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import DeleteIcon from '@mui/icons-material/Delete';
 

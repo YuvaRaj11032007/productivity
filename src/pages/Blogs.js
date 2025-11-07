@@ -1,19 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Container, Typography, Box, Paper, Divider, Button, 
   TextField, Dialog, DialogTitle, DialogContent, 
   DialogActions, Grid, Card, CardContent, CardActions,
-  IconButton, Chip, MenuItem, Select, FormControl,
+  Chip, MenuItem, Select, FormControl,
   InputLabel, Tab, Tabs
 } from '@mui/material';
 import { 
   Add as AddIcon, 
   Delete as DeleteIcon, 
-  Edit as EditIcon,
-  FilterList as FilterListIcon,
-  Sort as SortIcon,
-  Today as TodayIcon,
-  CalendarToday as CalendarTodayIcon
+  Edit as EditIcon
 } from '@mui/icons-material';
 import { format, parseISO, isToday, isThisWeek, isThisMonth } from 'date-fns';
 import { useSubjects } from '../contexts/SubjectsContext';

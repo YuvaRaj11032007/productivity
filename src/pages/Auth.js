@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient';
 import { Box, Button, TextField, Typography, Container, Paper, Avatar, CssBaseline, Grid, Link } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import logo from '../logo.svg'; // Assuming logo.svg is in the src directory, adjust if necessary
+
 
 const defaultTheme = createTheme({
   palette: {

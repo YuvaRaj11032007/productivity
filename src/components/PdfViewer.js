@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { Dialog, DialogContent, DialogTitle, IconButton, Box, Typography, Button, CircularProgress, TextField } from '@mui/material';
+import { Dialog, DialogContent, DialogTitle, IconButton, Box, Typography, CircularProgress } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';

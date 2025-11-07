@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { 
-  Box, Typography, Paper, TextField, Button, IconButton, 
+  Box, Typography, Paper, TextField, Button, 
   Dialog, DialogTitle, DialogContent, DialogActions,
-  List, ListItem, ListItemText, ListItemSecondary, Divider,
-  Card, CardContent, CardActions, Grid, Chip
+  Card, CardContent, CardActions, Grid
 } from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
 import { format } from 'date-fns';
