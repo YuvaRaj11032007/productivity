@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSubjects } from '../contexts/SubjectsContext';
 import { useAppContext } from '../contexts/AppContext';
 
@@ -6,9 +7,11 @@ const SubjectList = () => {
   const { subjects, deleteSubject } = useSubjects();
   const { state, dispatch } = useAppContext();
   const { activeSubject } = state;
+  const navigate = useNavigate();
 
   const handleSelectSubject = (subjectId) => {
     dispatch({ type: 'SET_ACTIVE_SUBJECT', payload: subjectId });
+    navigate(`/subject/${subjectId}`);
   };
 
   const handleDeleteSubject = (e, subjectId) => {
