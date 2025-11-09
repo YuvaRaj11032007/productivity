@@ -229,6 +229,12 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
     }
   }, [contextStopTimer, contextResetTimer, settings, mode, completedPomodoros, onSessionComplete, sessionName, notes, showTimerNotification, startTimer, resetTimer, TIMER_MODES.LONG_BREAK, TIMER_MODES.POMODORO, TIMER_MODES.SHORT_BREAK]);
 
+  useEffect(() => {
+    if (isRunning && mode !== TIMER_MODES.FOCUS && time <= 0) {
+      handleTimerComplete();
+    }
+  }, [time, isRunning, mode, handleTimerComplete, TIMER_MODES.FOCUS]);
+
   // Request notification permission
   const requestNotificationPermission = useCallback(async () => {
     if ('Notification' in window && Notification.permission !== 'granted') {

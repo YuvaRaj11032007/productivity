@@ -8,7 +8,7 @@ import {
   List, ListItem, ListItemText, ListItemIcon, ListItemSecondaryAction
 } from '@mui/material';
 import { SubjectsContext } from '../contexts/SubjectsContext';
-import { Bar, Pie, Line, Doughnut, Radar, PolarArea, getElementsAtEvent } from 'react-chartjs-2';
+import { Bar, Pie, Line, Doughnut, Radar, PolarArea } from 'react-chartjs-2';
 import { 
   Chart as ChartJS, CategoryScale, LinearScale, BarElement, 
   Title, Tooltip as ChartTooltip, Legend, ArcElement, PointElement, 
@@ -85,16 +85,16 @@ const Statistics = () => {
   const [chartType, setChartType] = useState('bar');
   const [selectedSubject, setSelectedSubject] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, ] = useState(false);
   const [goalTrackingView, setGoalTrackingView] = useState('daily'); // 'daily', 'weekly', 'monthly'
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
-  const [aiRecommendations, setAiRecommendations] = useState([]);
+  const [, setAiRecommendations] = useState([]);
   const { apiKeys } = useContext(AIContext);
-  const [showSnackbar, setShowSnackbar] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-  const [showInsightsDialog, setShowInsightsDialog] = useState(false);
+  const [, setShowSnackbar] = useState(false);
+  const [, setSnackbarMessage] = useState('');
+  const [, setSnackbarSeverity] = useState('success');
+  const [, setShowInsightsDialog] = useState(false);
   
   // Get unique categories from subjects
   const categories = useMemo(() => {
@@ -516,7 +516,7 @@ const Statistics = () => {
       weekly: weeklyViewData,
       monthly: monthlyViewData
     };
-  }, [subjects, studySessions, timeRange]);
+  }, [subjects, studySessions, timeRange, selectedSubject]);
   
   // Prepare category distribution data
   const prepareCategoryDistributionData = useCallback(() => {
@@ -865,6 +865,26 @@ const Statistics = () => {
       setShowSnackbar(true);
     }
     setIsAiLoading(false);
+  };
+
+  const generateInsights = () => {
+    // Placeholder for insights generation
+    return [];
+  };
+
+  const handleExportData = () => {
+    // Placeholder for data export
+    console.log('Exporting data...');
+  };
+
+  const handleChartClick = (event, chartRef, chartName) => {
+    // Placeholder for chart click
+    console.log(`Chart clicked: ${chartName}`);
+  };
+
+  const downloadChartAsImage = (chartRef, fileName) => {
+    // Placeholder for chart download
+    console.log(`Downloading chart as image: ${fileName}`);
   };
   
   return (
