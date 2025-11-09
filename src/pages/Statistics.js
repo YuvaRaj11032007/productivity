@@ -91,6 +91,10 @@ const Statistics = () => {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiRecommendations, setAiRecommendations] = useState([]);
   const { apiKeys } = useContext(AIContext);
+  const [showSnackbar, setShowSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const [showInsightsDialog, setShowInsightsDialog] = useState(false);
   
   // Get unique categories from subjects
   const categories = useMemo(() => {
@@ -1290,7 +1294,7 @@ const Statistics = () => {
                   </Typography>
                 </>
               ) : (
-                <Typography variant="body2" color="textSecondary">
+                <Typography variant="body2" color="text.secondary">
                   Not enough data to make a prediction. Continue logging your study sessions.
                 </Typography>
               )}
@@ -1382,7 +1386,7 @@ const Statistics = () => {
                   />
                 ) : (
                   <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                    <Typography variant="body2" color="textSecondary">
+                    <Typography variant="body2" color="text.secondary">
                       No data available for day of week distribution
                     </Typography>
                   </Box>
