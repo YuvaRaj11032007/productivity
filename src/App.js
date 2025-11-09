@@ -5,9 +5,8 @@ import CssBaseline from '@mui/material/CssBaseline';
 import './App.css';
 
 // Components
-import Navbar from './components/Navbar';
-import AIAssistant from './components/AIAssistant';
 import ErrorBoundary from './components/ErrorBoundary';
+import Layout from './components/Layout';
 
 // Pages
 import Dashboard from './pages/Dashboard';
@@ -35,23 +34,17 @@ function MainApp() {
           <SubjectsProvider>
             <TimerProvider>
               <AIProvider>
-                <Router>
-                  <div className="App">
-                    <Navbar />
-                    <div className="container">
-                      <Routes>
-                        <Route path="/subject/:subjectId" element={<SubjectDetail />} />
-                        <Route path="/" element={<Dashboard />} />
-                        <Route path="/subjects" element={<Dashboard />} />
-                        <Route path="/calendar" element={<Calendar />} />
-                        <Route path="/statistics" element={<Statistics />} />
-                        <Route path="/blogs" element={<Blogs />} />
-                        <Route path="/settings" element={<Settings />} />
-                      </Routes>
-                    </div>
-                    <AIAssistant />
-                  </div>
-                </Router>
+                <Routes>
+                  <Route element={<Layout />}>
+                    <Route index element={<Dashboard />} />
+                    <Route path="/subjects" element={<Dashboard />} />
+                    <Route path="/subject/:subjectId" element={<SubjectDetail />} />
+                    <Route path="/calendar" element={<Calendar />} />
+                    <Route path="/statistics" element={<Statistics />} />
+                    <Route path="/blogs" element={<Blogs />} />
+                    <Route path="/settings" element={<Settings />} />
+                  </Route>
+                </Routes>
               </AIProvider>
             </TimerProvider>
           </SubjectsProvider>
@@ -358,9 +351,11 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <AuthProvider>
-          <MainApp />
-        </AuthProvider>
+        <Router>
+          <AuthProvider>
+            <MainApp />
+          </AuthProvider>
+        </Router>
       </ThemeProvider>
     </ErrorBoundary>
   );
