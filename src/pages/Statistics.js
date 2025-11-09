@@ -1,4 +1,4 @@
-import React, { useContext, useState, useMemo, useRef } from 'react';
+import React, { useContext, useState, useMemo, useRef, useCallback } from 'react';
 import { 
   Container, Typography, Box, Paper, Grid, Card, CardContent, 
   Divider, FormControl, InputLabel, Select, MenuItem, Tabs, Tab,
@@ -8,14 +8,14 @@ import {
   List, ListItem, ListItemText, ListItemIcon, ListItemSecondaryAction
 } from '@mui/material';
 import { SubjectsContext } from '../contexts/SubjectsContext';
-import { Bar, Pie, Line, Doughnut, Radar, PolarArea, getElementAtEvent, getElementsAtEvent, getDatasetAtEvent } from 'react-chartjs-2';
+import { Bar, Pie, Line, Doughnut, Radar, PolarArea, getElementsAtEvent } from 'react-chartjs-2';
 import { 
   Chart as ChartJS, CategoryScale, LinearScale, BarElement, 
   Title, Tooltip as ChartTooltip, Legend, ArcElement, PointElement, 
   LineElement, RadialLinearScale, RadarController, PolarAreaController,
   Filler, BubbleController, ScatterController
 } from 'chart.js';
-import { format, subDays, eachDayOfInterval, startOfWeek, endOfWeek, getDay, addDays, differenceInDays, isWithinInterval, parseISO, isSameDay, isSameWeek, isSameMonth, getMonth, getYear, getWeek } from 'date-fns';
+import { format, subDays, eachDayOfInterval, getDay, addDays, differenceInDays } from 'date-fns';
 import DownloadIcon from '@mui/icons-material/Download';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
@@ -26,18 +26,12 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import PieChartIcon from '@mui/icons-material/PieChart';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import DonutLargeIcon from '@mui/icons-material/DonutLarge';
-import BubbleChartIcon from '@mui/icons-material/BubbleChart';
-import RadarIcon from '@mui/icons-material/Radar';
 import EqualizerIcon from '@mui/icons-material/Equalizer';
-import ScatterPlotIcon from '@mui/icons-material/ScatterPlot';
 import InsightsIcon from '@mui/icons-material/Insights';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import DateRangeIcon from '@mui/icons-material/DateRange';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import AssessmentIcon from '@mui/icons-material/Assessment';
-import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import CategoryIcon from '@mui/icons-material/Category';
 import GetAppIcon from '@mui/icons-material/GetApp';
 
@@ -69,7 +63,6 @@ const Statistics = () => {
     studySessions, 
     getTotalHoursForSubject, 
     getSubjectProgress,
-    getRecentStudySessions,
     checkDailyGoals
   } = useContext(SubjectsContext);
   
@@ -93,19 +86,6 @@ const Statistics = () => {
   const [selectedSubject, setSelectedSubject] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isLoading, setIsLoading] = useState(false);
-  const [showPredictions, setShowPredictions] = useState(true);
-  const [dateRangeType, setDateRangeType] = useState('preset'); // 'preset' or 'custom'
-  const [customDateRange, setCustomDateRange] = useState({
-    startDate: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
-    endDate: format(new Date(), 'yyyy-MM-dd')
-  });
-  const [comparisonMode, setComparisonMode] = useState(false);
-  const [comparisonPeriod, setComparisonPeriod] = useState('previous'); // 'previous', 'samePeriodLastYear'
-  const [showSnackbar, setShowSnackbar] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-  const [showInsightsDialog, setShowInsightsDialog] = useState(false);
-  const [focusTimeChartType, setFocusTimeChartType] = useState('heatmap'); // 'heatmap', 'bubble'
   const [goalTrackingView, setGoalTrackingView] = useState('daily'); // 'daily', 'weekly', 'monthly'
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -118,11 +98,9 @@ const Statistics = () => {
     return ['all', ...Array.from(uniqueCategories)];
   }, [subjects]);
   
-  // Define days of week array for reference
-  const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   
   // Prepare data for charts
-  const prepareSubjectData = () => {
+  const prepareSubjectData = useCallback(() => {
     // Filter subjects if a specific one is selected
     const filteredSubjects = selectedSubject === 'all' 
       ? subjects 
@@ -140,9 +118,9 @@ const Statistics = () => {
         },
       ],
     };
-  };
+  }, [selectedSubject, subjects, getTotalHoursForSubject]);
   
-  const prepareProgressData = () => {
+  const prepareProgressData = useCallback(() => {
     // Filter subjects if a specific one is selected
     const filteredSubjects = selectedSubject === 'all' 
       ? subjects 
@@ -160,9 +138,9 @@ const Statistics = () => {
         },
       ],
     };
-  };
+  }, [selectedSubject, subjects, getSubjectProgress]);
   
-  const prepareDailyData = () => {
+  const prepareDailyData = useCallback(() => {
     let days;
     const today = new Date();
     
@@ -204,8 +182,8 @@ const Statistics = () => {
     // Calculate moving average for trend line (3-day moving average)
     const movingAverages = [];
     for (let i = 2; i < dailyData.length; i++) {
-      const avg = (dailyData[i].total + dailyData[i-1].total + dailyData[i-2].total) / 3;
-      movingAverages.push(avg);
+        const avg = (dailyData[i].total + dailyData[i-1].total + dailyData[i-2].total) / 3;
+        movingAverages.push(avg);
     }
     
     // Add padding for the first two days where we can't calculate a 3-day average
@@ -236,10 +214,10 @@ const Statistics = () => {
         }
       ],
     };
-  };
+  }, [timeRange, studySessions, selectedSubject]);
   
   // Prepare time distribution data (hours by day of week)
-  const prepareTimeDistributionData = () => {
+  const prepareTimeDistributionData = useCallback(() => {
     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayTotals = Array(7).fill(0);
     const hoursByTimeOfDay = Array(24).fill(0);
@@ -270,12 +248,12 @@ const Statistics = () => {
     // Prepare time of day data for heatmap
     const timeOfDayData = [];
     for (let day = 0; day < 7; day++) {
-      for (let hour = 0; hour < 24; hour++) {
+        for (let hour = 0; hour < 24; hour++) {
         // In a real implementation, we would calculate this from actual data
         // For now, we'll use a simplified model based on the day totals
         const value = relevantSessions.filter(session => {
-          const sessionDate = new Date(session.date);
-          return getDay(sessionDate) === day && sessionDate.getHours() === hour;
+            const sessionDate = new Date(session.date);
+            return getDay(sessionDate) === day && sessionDate.getHours() === hour;
         }).reduce((sum, session) => sum + (session.duration / 60), 0);
         
         timeOfDayData.push({
@@ -313,95 +291,12 @@ const Statistics = () => {
       },
       heatmap: timeOfDayData
     };
-  };
-  
-  // Prepare focus time data (bubble chart showing duration and intensity)
-  const prepareFocusTimeData = () => {
-    // Filter sessions by selected subject and category if applicable
-    const relevantSessions = studySessions.filter(session => {
-      const subjectMatches = selectedSubject === 'all' || session.subjectId === selectedSubject;
-      
-      if (!subjectMatches) return false;
-      
-      if (selectedCategory !== 'all') {
-        const subject = subjects.find(s => s.id === session.subjectId);
-        return subject && (subject.category || 'Uncategorized') === selectedCategory;
-      }
-      
-      return true;
-    });
-    
-    // Group sessions by date
-    const sessionsByDate = {};
-    relevantSessions.forEach(session => {
-      const dateStr = format(new Date(session.date), 'yyyy-MM-dd');
-      if (!sessionsByDate[dateStr]) {
-        sessionsByDate[dateStr] = [];
-      }
-      sessionsByDate[dateStr].push(session);
-    });
-    
-    // Calculate focus metrics for each date
-    const focusData = Object.entries(sessionsByDate).map(([dateStr, sessions]) => {
-      const date = new Date(dateStr);
-      const totalDuration = sessions.reduce((sum, session) => sum + (session.duration / 60), 0);
-      const sessionCount = sessions.length;
-      const avgSessionLength = totalDuration / sessionCount;
-      
-      // Calculate a focus intensity score (0-100)
-      // This is a simplified model - in a real app, this could be based on more factors
-      const focusIntensity = Math.min(avgSessionLength * 10, 100); // Scale based on average session length
-      
-      return {
-        x: date,
-        y: totalDuration,
-        r: Math.max(sessionCount * 3, 5), // Radius based on session count, minimum 5
-        intensity: focusIntensity
-      };
-    });
-    
-    // Sort by date
-    focusData.sort((a, b) => a.x - b.x);
-    
-    return {
-      bubble: {
-        datasets: [
-          {
-            label: 'Focus Time',
-            data: focusData,
-            backgroundColor: focusData.map(d => `rgba(255, 99, 132, ${d.intensity / 100})`),
-            borderColor: 'rgba(255, 99, 132, 1)',
-            borderWidth: 1,
-          },
-        ],
-      },
-      scatter: {
-        datasets: [
-          {
-            label: 'Study Sessions',
-            data: relevantSessions.map(session => ({
-              x: new Date(session.date),
-              y: session.duration / 60
-            })),
-            backgroundColor: 'rgba(54, 162, 235, 0.6)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1,
-            pointRadius: 5,
-            pointHoverRadius: 8,
-          },
-        ],
-      }
-    };
-  };
+  }, [studySessions, selectedSubject, selectedCategory, subjects]);
   
   // Prepare goal tracking data
-  const prepareGoalTrackingData = () => {
-    // Get daily goals status
-    const dailyGoals = checkDailyGoals();
-    
+  const prepareGoalTrackingData = useCallback(() => {
     // For weekly and monthly views, we need to aggregate the data
     const today = new Date();
-    const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 0 }); // 0 = Sunday
     
     // Filter sessions based on time range
     let relevantSessions;
@@ -544,7 +439,7 @@ const Statistics = () => {
         
         // Calculate hours for each week
         relevantSessions.forEach(session => {
-          if (session.subjectId === item.subject.id) {
+            if (session.subjectId === item.subject.id) {
             const sessionDate = new Date(session.date);
             const daysAgo = differenceInDays(today, sessionDate);
             const weekIndex = Math.floor(daysAgo / 7);
@@ -568,14 +463,14 @@ const Statistics = () => {
     // Prepare data for monthly view (last 6 months)
     const monthlyLabels = [];
     for (let i = 5; i >= 0; i--) {
-      const monthDate = new Date(today);
-      monthDate.setMonth(today.getMonth() - i);
-      monthlyLabels.push(format(monthDate, 'MMM yyyy'));
+        const monthDate = new Date(today);
+        monthDate.setMonth(today.getMonth() - i);
+        monthlyLabels.push(format(monthDate, 'MMM yyyy'));
     }
     
     const monthlyViewData = {
-      labels: monthlyLabels,
-      datasets: filteredGoalData.map(item => {
+        labels: monthlyLabels,
+        datasets: filteredGoalData.map(item => {
         const monthlyHours = [0, 0, 0, 0, 0, 0]; // Initialize with 6 months
         
         // Calculate hours for each month
@@ -617,10 +512,10 @@ const Statistics = () => {
       weekly: weeklyViewData,
       monthly: monthlyViewData
     };
-  };
+  }, [subjects, studySessions, timeRange]);
   
   // Prepare category distribution data
-  const prepareCategoryDistributionData = () => {
+  const prepareCategoryDistributionData = useCallback(() => {
     // Group subjects by category
     const subjectsByCategory = {};
     subjects.forEach(subject => {
@@ -716,13 +611,11 @@ const Statistics = () => {
       },
       details: categoryData
     };
-  };
-  
-  // Use the checkDailyGoals function from context
+  }, [subjects, getTotalHoursForSubject]);
   
   
   // Prepare productivity score radar chart
-  const prepareProductivityRadarData = () => {
+  const prepareProductivityRadarData = useCallback(() => {
     // Filter subjects if a specific one is selected
     const filteredSubjects = selectedSubject === 'all' 
       ? subjects.slice(0, 5) // Limit to 5 subjects for readability
@@ -780,12 +673,41 @@ const Statistics = () => {
         pointRadius: 4
       }))
     };
-  };
+  }, [selectedSubject, subjects, getTotalHoursForSubject, getSubjectProgress, studySessions]);
   
-  // Use the checkDailyGoals function from context
   
-  // Calculate productivity score based on various metrics
-  const calculateProductivityScore = () => {
+  // Memoize chart data to prevent unnecessary recalculations
+  const subjectData = useMemo(prepareSubjectData, [prepareSubjectData]);
+  
+  const progressData = useMemo(prepareProgressData, [prepareProgressData]);
+  
+  const dailyData = useMemo(prepareDailyData, [prepareDailyData]);
+  
+  const timeDistributionData = useMemo(prepareTimeDistributionData, [prepareTimeDistributionData]);
+  
+  const productivityRadarData = useMemo(prepareProductivityRadarData, [prepareProductivityRadarData]);
+
+  const goalTrackingData = useMemo(prepareGoalTrackingData, [prepareGoalTrackingData]);
+  
+  const categoryDistributionData = useMemo(prepareCategoryDistributionData, [prepareCategoryDistributionData]);
+
+  // Calculate total stats
+  const totalHours = useMemo(() => subjects.reduce(
+    (total, subject) => total + getTotalHoursForSubject(subject.id), 0
+  ), [subjects, getTotalHoursForSubject]);
+  
+  const totalTasks = useMemo(() => subjects.reduce(
+    (total, subject) => total + subject.tasks.length, 0
+  ), [subjects]);
+  
+  const completedTasks = useMemo(() => subjects.reduce(
+    (total, subject) => total + subject.tasks.filter(task => task.completed).length, 0
+  ), [subjects]);
+  
+  const overallProgress = useMemo(() => totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0, [completedTasks, totalTasks]);
+  
+  // Calculate productivity score
+  const calculateProductivityScore = useCallback(() => {
     if (subjects.length === 0 || studySessions.length === 0) return 0;
     
     // Get recent sessions (last 30 days)
@@ -821,10 +743,12 @@ const Statistics = () => {
     );
     
     return Math.min(Math.round(score), 100); // Cap at 100
-  };
+  }, [subjects, studySessions, totalTasks, completedTasks, checkDailyGoals]);
+
+  const productivityScore = useMemo(calculateProductivityScore, [calculateProductivityScore]);
   
-  // Predict future progress based on current study patterns
-  const predictFutureProgress = () => {
+  // Predict future progress
+  const predictFutureProgress = useCallback(() => {
     if (subjects.length === 0 || studySessions.length === 0) {
       return { daysToComplete: null, estimatedCompletion: null, trend: 'neutral' };
     }
@@ -877,87 +801,9 @@ const Statistics = () => {
     }
     
     return { daysToComplete, estimatedCompletion, trend };
-  };
-  
-  // Memoize chart data to prevent unnecessary recalculations
-  const subjectData = useMemo(() => {
-    const data = prepareSubjectData();
-    // Ensure data and labels exist to prevent errors
-    return data && data.labels ? data : { labels: [], datasets: [{ data: [] }] };
-  }, [subjects, getTotalHoursForSubject, selectedSubject, selectedCategory]);
-  
-  const progressData = useMemo(() => {
-    const data = prepareProgressData();
-    return data && data.labels ? data : { labels: [], datasets: [{ data: [] }] };
-  }, [subjects, getSubjectProgress, selectedSubject, selectedCategory]);
-  
-  const dailyData = useMemo(() => {
-    const data = prepareDailyData();
-    return data && data.labels ? data : { labels: [], datasets: [{ data: [] }] };
-  }, [studySessions, timeRange, selectedSubject, selectedCategory]);
-  
-  const timeDistributionData = useMemo(() => {
-    const data = prepareTimeDistributionData();
-    return data && data.dayOfWeek && data.dayOfWeek.labels ? data : { 
-      dayOfWeek: { labels: [], datasets: [{ data: [] }] },
-      timeOfDay: { labels: [], datasets: [{ data: [] }] }
-    };
-  }, [studySessions, selectedSubject, selectedCategory]);
-  
-  const productivityRadarData = useMemo(() => {
-    const data = prepareProductivityRadarData();
-    return data && data.labels ? data : { labels: [], datasets: [{ data: [] }] };
-  }, [subjects, studySessions, getTotalHoursForSubject, getSubjectProgress, selectedSubject, selectedCategory]);
-  
-  const focusTimeData = useMemo(() => {
-    const data = prepareFocusTimeData();
-    return data && data.bubble && data.bubble.datasets ? data : { 
-      bubble: { datasets: [] },
-      scatter: { datasets: [] },
-      heatmap: []
-    };
-  }, [studySessions, subjects, selectedSubject, selectedCategory]);
-  
-  const goalTrackingData = useMemo(() => {
-    const data = prepareGoalTrackingData();
-    return data && data.labels ? data : { 
-      labels: [], 
-      datasets: [{ data: [] }],
-      daily: { labels: [], datasets: [{ data: [] }] },
-      weekly: { labels: [], datasets: [{ data: [] }] },
-      monthly: { labels: [], datasets: [{ data: [] }] }
-    };
-  }, [subjects, studySessions, timeRange, selectedSubject, selectedCategory]);
-  
-  const categoryDistributionData = useMemo(() => {
-    const data = prepareCategoryDistributionData();
-    return data && data.hours && data.hours.labels ? data : { 
-      hours: { labels: [], datasets: [{ data: [] }] },
-      completion: { labels: [], datasets: [{ data: [] }] },
-      details: []
-    };
-  }, [subjects, studySessions, getTotalHoursForSubject]);
-  
-  // Calculate total stats
-  const totalHours = subjects.reduce(
-    (total, subject) => total + getTotalHoursForSubject(subject.id), 0
-  );
-  
-  const totalTasks = subjects.reduce(
-    (total, subject) => total + subject.tasks.length, 0
-  );
-  
-  const completedTasks = subjects.reduce(
-    (total, subject) => total + subject.tasks.filter(task => task.completed).length, 0
-  );
-  
-  const overallProgress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-  
-  // Calculate productivity score
-  const productivityScore = useMemo(calculateProductivityScore, [subjects, studySessions, totalTasks, completedTasks]);
-  
-  // Predict future progress
-  const prediction = useMemo(predictFutureProgress, [subjects, studySessions, totalTasks, completedTasks]);
+  }, [subjects, studySessions, totalTasks, completedTasks]);
+
+  const prediction = useMemo(predictFutureProgress, [predictFutureProgress]);
   
   const handleTimeRangeChange = (event) => {
     setTimeRange(event.target.value);
@@ -980,162 +826,16 @@ const Statistics = () => {
   const handleCategoryChange = (event) => {
     setSelectedCategory(event.target.value);
   };
-  
-  const handleFocusTimeChartTypeChange = (event, newType) => {
-    if (newType !== null) {
-      setFocusTimeChartType(newType);
-    }
-  };
-  
+
   const handleGoalTrackingViewChange = (event, newView) => {
     if (newView !== null) {
       setGoalTrackingView(newView);
     }
   };
   
-  const handleDateRangeTypeChange = (event) => {
-    setDateRangeType(event.target.value);
-  };
-  
-  const handleCustomDateChange = (type, value) => {
-    setCustomDateRange(prev => ({
-      ...prev,
-      [type]: value
-    }));
-  };
-  
-  const handleComparisonToggle = () => {
-    setComparisonMode(prev => !prev);
-  };
-  
-  const handleComparisonPeriodChange = (event) => {
-    setComparisonPeriod(event.target.value);
-  };
-  
-  const handlePredictionsToggle = () => {
-    setShowPredictions(prev => !prev);
-  };
-  
   const handleShowInsightsDialog = () => {
     handleGenerateRecommendations();
     setShowInsightsDialog(true);
-  };
-  
-  const handleCloseInsightsDialog = () => {
-    setShowInsightsDialog(false);
-  };
-  
-  // Function to download chart as image
-  const downloadChartAsImage = (chartRef, fileName) => {
-    if (chartRef.current) {
-      const link = document.createElement('a');
-      link.download = `${fileName}.png`;
-      link.href = chartRef.current.toBase64Image();
-      link.click();
-      
-      setSnackbarMessage(`Chart downloaded as ${fileName}.png`);
-      setSnackbarSeverity('success');
-      setShowSnackbar(true);
-    } else {
-      setSnackbarMessage('Could not download chart. Please try again.');
-      setSnackbarSeverity('error');
-      setShowSnackbar(true);
-    }
-  };
-  
-  // Handle chart click events
-  const handleChartClick = (event, chartRef, chartType) => {
-    if (!chartRef.current) {
-      console.error('Chart reference is not available');
-      return;
-    }
-    
-    try {
-      // Get clicked elements based on chart type
-      const elements = getElementsAtEvent(chartRef.current, event);
-      const element = getElementAtEvent(chartRef.current, event);
-      const dataset = getDatasetAtEvent(chartRef.current, event);
-      
-      if (elements.length > 0) {
-        const { datasetIndex, index } = elements[0];
-        const label = chartRef.current.data.labels[index];
-        const value = chartRef.current.data.datasets[datasetIndex].data[index];
-        
-        console.log(`Clicked on ${chartType} chart:`, { label, value, datasetIndex, index });
-        
-        // You can add custom logic here based on the clicked element
-        // For example, filtering data, showing details, etc.
-        setSnackbarMessage(`Clicked on ${label}: ${value}`);
-        setSnackbarSeverity('info');
-        setShowSnackbar(true);
-      }
-    } catch (error) {
-      console.error('Error handling chart click:', error);
-    }
-  };
-  
-    const generateInsights = () => {
-      if (aiRecommendations.length > 0) {
-        return aiRecommendations.map(rec => ({ title: 'Recommendation', description: rec, icon: <InsightsIcon /> }));
-      }
-      return [];
-    };  
-  // Simulate data export (in a real app, this would generate a CSV/Excel file)
-  const handleExportData = () => {
-    setIsLoading(true);
-    
-    // Prepare data for export
-    const exportData = {
-      subjects: subjects.map(subject => ({
-        id: subject.id,
-        name: subject.name,
-        category: subject.category || 'Uncategorized',
-        color: subject.color,
-        dailyGoalHours: subject.dailyGoalHours,
-        totalHours: getTotalHoursForSubject(subject.id),
-        progress: getSubjectProgress(subject.id),
-        tasksTotal: subject.tasks.length,
-        tasksCompleted: subject.tasks.filter(task => task.completed).length
-      })),
-      studySessions: studySessions.map(session => ({
-        id: session.id,
-        subjectId: session.subjectId,
-        subjectName: subjects.find(s => s.id === session.subjectId)?.name || 'Unknown',
-        date: session.date,
-        duration: session.duration,
-        durationHours: session.duration / 60,
-        notes: session.notes
-      })),
-      summary: {
-        totalSubjects: subjects.length,
-        totalSessions: studySessions.length,
-        totalHours,
-        totalTasks,
-        completedTasks,
-        overallProgress,
-        productivityScore
-      }
-    };
-    
-    // Simulate processing delay
-    setTimeout(() => {
-      // In a real implementation, this would generate and download a file
-      // For now, we'll just log the data to console and show a message
-      console.log('Export data:', exportData);
-      
-      setSnackbarMessage('Data exported successfully!');
-      setSnackbarSeverity('success');
-      setShowSnackbar(true);
-      setIsLoading(false);
-    }, 1500);
-  };
-  
-  // Handle snackbar close
-  const handleSnackbarClose = (event, reason) => {
-    if (reason === 'clickaway') {
-      return;
-    }
-    setShowSnackbar(false);
   };
 
   const handleGenerateRecommendations = async () => {
@@ -2109,7 +1809,7 @@ const Statistics = () => {
                   />
                 ) : (
                   <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="textSecondary">
                       No category distribution data available
                     </Typography>
                   </Box>

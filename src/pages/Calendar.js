@@ -15,7 +15,6 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { format } from 'date-fns';
 import { SubjectsContext } from '../contexts/SubjectsContext';
-import { useAI } from '../contexts/AIContext';
 import aiService from '../services/aiService';
 
 const CalendarView = () => {
@@ -57,7 +56,7 @@ const CalendarView = () => {
     
             if (schedule.length > 0) {
     
-              const observations = await aiService.getTimetableObservations(schedule);
+              await aiService.getTimetableObservations(schedule);
     
               
     

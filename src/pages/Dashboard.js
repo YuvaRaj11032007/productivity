@@ -17,8 +17,6 @@ import CategoryIcon from '@mui/icons-material/Category';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import { SubjectsContext } from '../contexts/SubjectsContext';
-import { useAI } from '../contexts/AIContext';
-import { useTheme } from '@mui/material/styles';
 
 const Dashboard = () => {
   const { 

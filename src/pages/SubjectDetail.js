@@ -2,11 +2,12 @@ import React, { useContext, useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container, Typography, Box, Paper, Divider, List, ListItem,
-  ListItemText, ListItemIcon, Checkbox, IconButton, Button,
+  ListItemText, IconButton, Button,
   TextField, Dialog, DialogTitle, DialogContent, DialogActions,
-  Grid, Card, CardContent, LinearProgress, Chip, Tabs, Tab, CircularProgress
+  Grid, Card, CardContent, LinearProgress, Tabs, Tab, CircularProgress
 } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import {
+} from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import TimerIcon from '@mui/icons-material/Timer';
@@ -14,16 +15,15 @@ import NoteIcon from '@mui/icons-material/Note';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AlarmIcon from '@mui/icons-material/Alarm';
 import BookIcon from '@mui/icons-material/Book';
-import { useNodesState, useEdgesState, addEdge } from '@xyflow/react';
+
 
 import { SubjectsContext } from '../contexts/SubjectsContext';
-import { useAI } from '../contexts/AIContext';
 import aiService from '../services/aiService';
 import DailyPlannerBoard from '../components/DailyPlannerBoard';
 import { scheduleTasksDaily } from '../services/scheduling';
-import { format } from 'date-fns';
+
 import ModernTimer from '../components/ModernTimer';
-import BlogList from '../components/BlogList';
+
 import TaskList from '../components/TaskList';
 import TestFeature from '../components/TestFeature';
 import PdfViewer from '../components/PdfViewer';
@@ -40,23 +40,18 @@ const SubjectDetail = () => {
   const {
     subjects,
     updateSubject,
-    addTask,
     addMultipleTasks,
     toggleTaskCompletion,
-    deleteTask,
     addAttachment,
     deleteAttachment,
     addStudySession,
     studySessions,
-    deleteStudySession,
     getTotalHoursForSubject,
-    getSubjectProgress,
-    setTaskFields
+    getSubjectProgress
   } = useContext(SubjectsContext);
 
   const [subject, setSubject] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [newTask, setNewTask] = useState('');
   const [openSessionDialog, setOpenSessionDialog] = useState(false);
   const [openNotesDialog, setOpenNotesDialog] = useState(false);
   const [newSession, setNewSession] = useState({
@@ -71,7 +66,7 @@ const SubjectDetail = () => {
   const [isScheduling, setIsScheduling] = useState(false);
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const [selectedPdf, setSelectedPdf] = useState(null);
-  const { generateDailyPlan } = useAI();
+
 
   // const [nodes, setNodes, onNodesChange] = useNodesState([]);
   // const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -165,12 +160,7 @@ const SubjectDetail = () => {
     session.subjectId === subjectId
   ).sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  const handleAddTask = () => {
-    if (newTask.trim()) {
-      addTask(subjectId, { name: newTask });
-      setNewTask('');
-    }
-  };
+
 
   const handleGenerateTasksAI = useCallback(async () => {
     if (!subject) return;
@@ -259,7 +249,7 @@ const SubjectDetail = () => {
     } finally {
       setIsGenerating(false);
     }
-  }, [subject, addMultipleTasks, subjectId]);
+  }, [subject, addMultipleTasks, subjectId, studySessions, subjects]);
 
   const handleAutoSchedule = useCallback(() => {
     if (!subject) return;
@@ -670,7 +660,7 @@ const SubjectDetail = () => {
                   </IconButton>
                 </>
               }>
-                <ListItemText primary={<a href="#" onClick={() => handleOpenPdf(attachment)}>{attachment.name}</a>} />
+                <ListItemText primary={<Button variant="text" onClick={() => handleOpenPdf(attachment)} style={{textTransform: 'none', padding: 0, minWidth: 0}}>{attachment.name}</Button>} />
               </ListItem>
             ))}
           </List>

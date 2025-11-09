@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -21,8 +21,7 @@ import {
   Alert,
   FormGroup,
   Divider,
-  useTheme,
-  useMediaQuery
+  useTheme
 } from '@mui/material';
 import {
   CheckCircle,
@@ -139,7 +138,7 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
   };
 
   // Start the timer
-  const startTimer = () => {
+  const startTimer = useCallback(() => {
     if (!isRunning) {
       const targetDuration = mode === TIMER_MODES.FOCUS ? 0 : settings[mode];
       contextStartTimer(subjectId, {
@@ -148,7 +147,7 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
         elapsedSeconds: time
       });
     }
-  };
+  }, [isRunning, mode, settings, contextStartTimer, subjectId, time, TIMER_MODES.FOCUS]);
 
   // Pause the timer
   const pauseTimer = () => {
@@ -158,22 +157,31 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
   };
 
   // Reset the timer
-  const resetTimer = () => {
+  const resetTimer = useCallback(() => {
     contextResetTimer(subjectId);
-  };
+  }, [contextResetTimer, subjectId]);
 
-  // Check for timer completion
-  useEffect(() => {
-    if (isRunning && activeTimer?.subjectId === subjectId) {
-      const targetDuration = activeTimer.targetDuration;
-      if (targetDuration > 0 && time >= targetDuration) {
-        handleTimerComplete();
+  // Show notification
+  const showTimerNotification = useCallback((message, severity = 'info') => {
+    setNotification({
+      open: true,
+      severity,
+      message
+    });
+    setTimeout(() => setNotification(prev => ({ ...prev, open: false })), 5000); // Hide after 5 seconds
+    
+    // Browser notification if supported and permitted
+    if (settings.notifications && 'Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification('Study Timer', { body: message });
+      } catch (error) {
+        console.warn('Error showing browser notification:', error);
       }
     }
-  }, [time, isRunning, activeTimer, subjectId, handleTimerComplete]);
+  }, [settings.notifications]);
 
   // Handle timer completion
-  const handleTimerComplete = () => {
+  const handleTimerComplete = useCallback(() => {
     contextStopTimer();
     contextResetTimer();
     
@@ -219,29 +227,10 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
       setMode(TIMER_MODES.POMODORO);
       if (settings.autoStartPomodoros) startTimer();
     }
-  };
-
-  // Show notification
-  const showTimerNotification = (message, severity = 'info') => {
-    setNotification({
-      open: true,
-      severity,
-      message
-    });
-    setTimeout(() => setNotification(prev => ({ ...prev, open: false })), 5000); // Hide after 5 seconds
-    
-    // Browser notification if supported and permitted
-    if (settings.notifications && 'Notification' in window && Notification.permission === 'granted') {
-      try {
-        new Notification('Study Timer', { body: message });
-      } catch (error) {
-        console.warn('Error showing browser notification:', error);
-      }
-    }
-  };
+  }, [contextStopTimer, contextResetTimer, settings, mode, completedPomodoros, onSessionComplete, sessionName, notes, showTimerNotification, startTimer, resetTimer, TIMER_MODES.LONG_BREAK, TIMER_MODES.POMODORO, TIMER_MODES.SHORT_BREAK]);
 
   // Request notification permission
-  const requestNotificationPermission = async () => {
+  const requestNotificationPermission = useCallback(async () => {
     if ('Notification' in window && Notification.permission !== 'granted') {
       try {
         const permission = await Notification.requestPermission();
@@ -256,7 +245,7 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
         }));
       }
     }
-  };
+  }, [showTimerNotification]);
 
   // Handle mode change
   const handleModeChange = (event, newMode) => {
