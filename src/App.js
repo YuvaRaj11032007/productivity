@@ -40,9 +40,9 @@ function MainApp() {
                     <Navbar />
                     <div className="container">
                       <Routes>
+                        <Route path="/subject/:subjectId" element={<SubjectDetail />} />
                         <Route path="/" element={<Dashboard />} />
                         <Route path="/subjects" element={<Dashboard />} />
-                        <Route path="/subject/:subjectId" element={<SubjectDetail />} />
                         <Route path="/calendar" element={<Calendar />} />
                         <Route path="/statistics" element={<Statistics />} />
                         <Route path="/blogs" element={<Blogs />} />
