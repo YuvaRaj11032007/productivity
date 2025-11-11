@@ -11,10 +11,10 @@ function TaskList({ subjectId }) {
 
   const [newTaskTitle, setNewTaskTitle] = useState('');
 
-  const handleAddTask = (e) => {
+  const handleAddTask = async (e) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
-    addTask(subjectId, {
+    await addTask(subjectId, {
       name: newTaskTitle,
     });
     setNewTaskTitle('');
