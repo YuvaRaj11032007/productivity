@@ -169,12 +169,14 @@ export const SubjectsProvider = ({ children }) => {
   const addMultipleTasks = async (subjectId, tasks) => {
     if (!user) return;
     const tasksWithIds = tasks.map(t => ({ ...t, subject_id: subjectId, user_id: user.id }));
-    const { error } = await supabase.from('tasks').insert(tasksWithIds);
+    const { data, error } = await supabase.from('tasks').insert(tasksWithIds).select();
 
     if (error) {
       console.error('Error adding multiple tasks:', error);
+      return null;
     } else {
       fetchData();
+      return data;
     }
   };
 

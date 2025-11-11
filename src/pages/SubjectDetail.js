@@ -199,9 +199,13 @@ const SubjectDetail = () => {
       
       if (aiTasks.length > 0) {
         console.log(`Adding ${aiTasks.length} AI-generated tasks to subject ${subject?.name}`);
-        await addMultipleTasks(subjectId, aiTasks);
+        const newTasks = await addMultipleTasks(subjectId, aiTasks);
         console.log('AI tasks added successfully');
-        await fetchData(); // Call fetchData to refresh the data
+        
+        if (newTasks) {
+          fetchData();
+        }
+
       } else {
         console.log('AI parsing failed, using fallback tasks');
         // Fallback to comprehensive task list if AI parsing fails
@@ -222,9 +226,12 @@ const SubjectDetail = () => {
           { name: 'Revision and Final Preparation', description: 'Revision and Final Preparation', estimatedMinutes: 120, dueDate: null },
           { name: 'Comprehensive Review and Practice', description: 'Comprehensive Review and Practice', estimatedMinutes: 150, dueDate: null }
         ];
-        await addMultipleTasks(subjectId, fallbackTasks);
+        const newTasks = await addMultipleTasks(subjectId, fallbackTasks);
         console.log('Fallback tasks added successfully');
-        await fetchData(); // Call fetchData to refresh the data
+        
+        if (newTasks) {
+          fetchData();
+        }
       }
       
     } catch (e) {
@@ -248,9 +255,12 @@ const SubjectDetail = () => {
         { name: 'Comprehensive Review and Practice', description: 'Comprehensive Review and Practice', estimatedMinutes: 150, dueDate: null }
       ];
       if (typeof addMultipleTasks === 'function') {
-        await addMultipleTasks(subjectId, fallbackTasks);
+        const newTasks = await addMultipleTasks(subjectId, fallbackTasks);
         console.log('Fallback tasks added after AI failure');
-        await fetchData(); // Call fetchData to refresh the data
+        
+        if (newTasks) {
+          fetchData();
+        }
       } else {
         console.error('addMultipleTasks is not a function in catch block');
       }
