@@ -48,10 +48,10 @@ const formatDayLabel = (d) => {
 };
 
 const DailyPlannerBoard = ({ days = 7, subjects = [], subjectId = null, onMoveTask, onToggleTask }) => {
-  const allTasks = useMemo(() => {
+  const allTasks = (() => {
     const filteredSubjects = subjectId ? subjects.filter(s => s.id === subjectId) : subjects;
     return filteredSubjects.flatMap(s => (s.tasks || []).map(t => ({ ...t, subjectId: s.id, subjectName: s.name, color: s.color })));
-  }, [subjects, subjectId]);
+  })();
 
   const [today] = useState(() => new Date());
   const dayKeys = useMemo(() => {
@@ -60,7 +60,7 @@ const DailyPlannerBoard = ({ days = 7, subjects = [], subjectId = null, onMoveTa
     return keys;
   }, [days, today]);
 
-  const columns = useMemo(() => {
+  const columns = (() => {
     const map = new Map();
     dayKeys.forEach(d => map.set(d.toISOString(), []));
     const unplanned = [];
@@ -73,7 +73,7 @@ const DailyPlannerBoard = ({ days = 7, subjects = [], subjectId = null, onMoveTa
       }
     });
     return { byDay: map, unplanned };
-  }, [allTasks, dayKeys]);
+  })();
 
   const handleDragEnd = useCallback((result) => {
     const { destination, draggableId } = result;
