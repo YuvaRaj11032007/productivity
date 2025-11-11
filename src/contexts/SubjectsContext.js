@@ -44,7 +44,7 @@ export const SubjectsProvider = ({ children }) => {
 
       
     }
-  }, [user]);
+  }, [user, setSubjects, setStudySessions, setTimetableImage, setClassSchedule]);
 
   useEffect(() => {
     fetchData();
@@ -101,7 +101,7 @@ export const SubjectsProvider = ({ children }) => {
     if (error) {
       console.error('Error updating subject:', error);
     } else if (data) {
-      setSubjects(subjects.map(subject => (subject.id === id ? data[0] : subject)));
+      fetchData();
     }
   };
 
