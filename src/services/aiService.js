@@ -69,11 +69,12 @@ class AIService {
     
     for (const line of lines) {
       const trimmedLine = line.replace(/^-/, '').trim();
-      const match = trimmedLine.match(/(.+?)\\s*\\(Estimated Minutes:\\s*(\\d+)\\)/);
+      const match = trimmedLine.match(/(.+?)\s*\(Estimated Minutes:\s*(\d+)\)/);
       
       if (match) {
         tasks.push({
           name: match[1].trim(),
+          description: match[1].trim(),
           estimatedMinutes: parseInt(match[2], 10),
           dueDate: null
         });
