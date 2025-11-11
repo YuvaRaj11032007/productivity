@@ -146,7 +146,7 @@ const SubjectDetail = () => {
   const completedTasks = subject?.tasks?.filter(t => t.completed) || [];
 
   useEffect(() => {
-    const foundSubject = subjects.find(s => s.id === subjectId);
+    const foundSubject = subjects.find(s => s.id === parseInt(subjectId));
     if (foundSubject) {
       setSubject(foundSubject);
       setSubjectNotes(foundSubject.notes || '');
