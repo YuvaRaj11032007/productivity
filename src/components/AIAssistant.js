@@ -522,7 +522,7 @@ const AIAssistant = () => {
                         max={99}
                       >
                         <Chip
-                          label={aiState.currentProvider.toUpperCase()}
+                          label={aiState.currentProvider?.toUpperCase()}
                           size="small"
                           color="primary"
                           variant="outlined"

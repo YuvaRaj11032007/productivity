@@ -1556,7 +1556,7 @@ const Statistics = () => {
                                   mr: 1 
                                 }}
                               >
-                                {subject.name.charAt(0).toUpperCase()}
+                                {subject.name?.charAt(0).toUpperCase()}
                               </Avatar>
                               {subject.name}
                             </Box>
