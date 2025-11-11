@@ -47,7 +47,8 @@ const SubjectDetail = () => {
     addStudySession,
     studySessions,
     getTotalHoursForSubject,
-    getSubjectProgress
+    getSubjectProgress,
+    fetchData
   } = useContext(SubjectsContext);
 
   const [subject, setSubject] = useState(null);
@@ -197,9 +198,10 @@ const SubjectDetail = () => {
       console.log('Parsed AI tasks:', aiTasks);
       
       if (aiTasks.length > 0) {
-        console.log(`Adding ${aiTasks.length} AI-generated tasks to subject ${subject.name}`);
-        addMultipleTasks(subjectId, aiTasks);
+        console.log(`Adding ${aiTasks.length} AI-generated tasks to subject ${subject?.name}`);
+        await addMultipleTasks(subjectId, aiTasks);
         console.log('AI tasks added successfully');
+        await fetchData(); // Call fetchData to refresh the data
       } else {
         console.log('AI parsing failed, using fallback tasks');
         // Fallback to comprehensive task list if AI parsing fails
@@ -220,8 +222,9 @@ const SubjectDetail = () => {
           { name: 'Revision and Final Preparation', estimatedMinutes: 120, dueDate: null },
           { name: 'Comprehensive Review and Practice', estimatedMinutes: 150, dueDate: null }
         ];
-        addMultipleTasks(subjectId, fallbackTasks);
+        await addMultipleTasks(subjectId, fallbackTasks);
         console.log('Fallback tasks added successfully');
+        await fetchData(); // Call fetchData to refresh the data
       }
       
     } catch (e) {
@@ -249,7 +252,7 @@ const SubjectDetail = () => {
     } finally {
       setIsGenerating(false);
     }
-  }, [subject, addMultipleTasks, subjectId, studySessions, subjects]);
+  }, [subject, addMultipleTasks, subjectId, studySessions, subjects, fetchData]);
 
   const handleAutoSchedule = useCallback(() => {
     if (!subject) return;
