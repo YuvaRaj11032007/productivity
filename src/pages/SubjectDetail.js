@@ -247,8 +247,13 @@ const SubjectDetail = () => {
         { name: 'Revision and Final Preparation', description: 'Revision and Final Preparation', estimatedMinutes: 120, dueDate: null },
         { name: 'Comprehensive Review and Practice', description: 'Comprehensive Review and Practice', estimatedMinutes: 150, dueDate: null }
       ];
-      await addMultipleTasks(subjectId, fallbackTasks);
-      console.log('Fallback tasks added after AI failure');
+      if (typeof addMultipleTasks === 'function') {
+        await addMultipleTasks(subjectId, fallbackTasks);
+        console.log('Fallback tasks added after AI failure');
+        await fetchData(); // Call fetchData to refresh the data
+      } else {
+        console.error('addMultipleTasks is not a function in catch block');
+      }
     } finally {
       setIsGenerating(false);
     }
