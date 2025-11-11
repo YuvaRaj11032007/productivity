@@ -206,21 +206,21 @@ const SubjectDetail = () => {
         console.log('AI parsing failed, using fallback tasks');
         // Fallback to comprehensive task list if AI parsing fails
         const fallbackTasks = [
-          { name: 'Introduction and Setup', estimatedMinutes: 60, dueDate: null },
-          { name: 'Basic Concepts and Fundamentals', estimatedMinutes: 120, dueDate: null },
-          { name: 'Core Theory and Principles', estimatedMinutes: 180, dueDate: null },
-          { name: 'Practice Problems - Easy Level', estimatedMinutes: 90, dueDate: null },
-          { name: 'Practice Problems - Medium Level', estimatedMinutes: 120, dueDate: null },
-          { name: 'Advanced Concepts', estimatedMinutes: 150, dueDate: null },
-          { name: 'Practice Problems - Hard Level', estimatedMinutes: 180, dueDate: null },
-          { name: 'Real-world Applications', estimatedMinutes: 120, dueDate: null },
-          { name: 'Review and Consolidation', estimatedMinutes: 90, dueDate: null },
-          { name: 'Final Assessment and Practice', estimatedMinutes: 120, dueDate: null },
-          { name: 'Advanced Topics and Extensions', estimatedMinutes: 150, dueDate: null },
-          { name: 'Project Work and Implementation', estimatedMinutes: 240, dueDate: null },
-          { name: 'Mock Tests and Evaluations', estimatedMinutes: 180, dueDate: null },
-          { name: 'Revision and Final Preparation', estimatedMinutes: 120, dueDate: null },
-          { name: 'Comprehensive Review and Practice', estimatedMinutes: 150, dueDate: null }
+          { name: 'Introduction and Setup', description: 'Introduction and Setup', estimatedMinutes: 60, dueDate: null },
+          { name: 'Basic Concepts and Fundamentals', description: 'Basic Concepts and Fundamentals', estimatedMinutes: 120, dueDate: null },
+          { name: 'Core Theory and Principles', description: 'Core Theory and Principles', estimatedMinutes: 180, dueDate: null },
+          { name: 'Practice Problems - Easy Level', description: 'Practice Problems - Easy Level', estimatedMinutes: 90, dueDate: null },
+          { name: 'Practice Problems - Medium Level', description: 'Practice Problems - Medium Level', estimatedMinutes: 120, dueDate: null },
+          { name: 'Advanced Concepts', description: 'Advanced Concepts', estimatedMinutes: 150, dueDate: null },
+          { name: 'Practice Problems - Hard Level', description: 'Practice Problems - Hard Level', estimatedMinutes: 180, dueDate: null },
+          { name: 'Real-world Applications', description: 'Real-world Applications', estimatedMinutes: 120, dueDate: null },
+          { name: 'Review and Consolidation', description: 'Review and Consolidation', estimatedMinutes: 90, dueDate: null },
+          { name: 'Final Assessment and Practice', description: 'Final Assessment and Practice', estimatedMinutes: 120, dueDate: null },
+          { name: 'Advanced Topics and Extensions', description: 'Advanced Topics and Extensions', estimatedMinutes: 150, dueDate: null },
+          { name: 'Project Work and Implementation', description: 'Project Work and Implementation', estimatedMinutes: 240, dueDate: null },
+          { name: 'Mock Tests and Evaluations', description: 'Mock Tests and Evaluations', estimatedMinutes: 180, dueDate: null },
+          { name: 'Revision and Final Preparation', description: 'Revision and Final Preparation', estimatedMinutes: 120, dueDate: null },
+          { name: 'Comprehensive Review and Practice', description: 'Comprehensive Review and Practice', estimatedMinutes: 150, dueDate: null }
         ];
         await addMultipleTasks(subjectId, fallbackTasks);
         console.log('Fallback tasks added successfully');
@@ -231,23 +231,23 @@ const SubjectDetail = () => {
       console.error('AI task generation failed:', e);
       // Fallback to comprehensive task list if AI fails completely
       const fallbackTasks = [
-        { name: 'Introduction and Setup', estimatedMinutes: 60, dueDate: null },
-        { name: 'Basic Concepts and Fundamentals', estimatedMinutes: 120, dueDate: null },
-        { name: 'Core Theory and Principles', estimatedMinutes: 180, dueDate: null },
-        { name: 'Practice Problems - Easy Level', estimatedMinutes: 90, dueDate: null },
-        { name: 'Practice Problems - Medium Level', estimatedMinutes: 120, dueDate: null },
-        { name: 'Advanced Concepts', estimatedMinutes: 150, dueDate: null },
-        { name: 'Practice Problems - Hard Level', estimatedMinutes: 180, dueDate: null },
-        { name: 'Real-world Applications', estimatedMinutes: 120, dueDate: null },
-        { name: 'Review and Consolidation', estimatedMinutes: 90, dueDate: null },
-        { name: 'Final Assessment and Practice', estimatedMinutes: 120, dueDate: null },
-        { name: 'Advanced Topics and Extensions', estimatedMinutes: 150, dueDate: null },
-        { name: 'Project Work and Implementation', estimatedMinutes: 240, dueDate: null },
-        { name: 'Mock Tests and Evaluations', estimatedMinutes: 180, dueDate: null },
-        { name: 'Revision and Final Preparation', estimatedMinutes: 120, dueDate: null },
-        { name: 'Comprehensive Review and Practice', estimatedMinutes: 150, dueDate: null }
+        { name: 'Introduction and Setup', description: 'Introduction and Setup', estimatedMinutes: 60, dueDate: null },
+        { name: 'Basic Concepts and Fundamentals', description: 'Basic Concepts and Fundamentals', estimatedMinutes: 120, dueDate: null },
+        { name: 'Core Theory and Principles', description: 'Core Theory and Principles', estimatedMinutes: 180, dueDate: null },
+        { name: 'Practice Problems - Easy Level', description: 'Practice Problems - Easy Level', estimatedMinutes: 90, dueDate: null },
+        { name: 'Practice Problems - Medium Level', description: 'Practice Problems - Medium Level', estimatedMinutes: 120, dueDate: null },
+        { name: 'Advanced Concepts', description: 'Advanced Concepts', estimatedMinutes: 150, dueDate: null },
+        { name: 'Practice Problems - Hard Level', description: 'Practice Problems - Hard Level', estimatedMinutes: 180, dueDate: null },
+        { name: 'Real-world Applications', description: 'Real-world Applications', estimatedMinutes: 120, dueDate: null },
+        { name: 'Review and Consolidation', description: 'Review and Consolidation', estimatedMinutes: 90, dueDate: null },
+        { name: 'Final Assessment and Practice', description: 'Final Assessment and Practice', estimatedMinutes: 120, dueDate: null },
+        { name: 'Advanced Topics and Extensions', description: 'Advanced Topics and Extensions', estimatedMinutes: 150, dueDate: null },
+        { name: 'Project Work and Implementation', description: 'Project Work and Implementation', estimatedMinutes: 240, dueDate: null },
+        { name: 'Mock Tests and Evaluations', description: 'Mock Tests and Evaluations', estimatedMinutes: 180, dueDate: null },
+        { name: 'Revision and Final Preparation', description: 'Revision and Final Preparation', estimatedMinutes: 120, dueDate: null },
+        { name: 'Comprehensive Review and Practice', description: 'Comprehensive Review and Practice', estimatedMinutes: 150, dueDate: null }
       ];
-      addMultipleTasks(subjectId, fallbackTasks);
+      await addMultipleTasks(subjectId, fallbackTasks);
       console.log('Fallback tasks added after AI failure');
     } finally {
       setIsGenerating(false);
