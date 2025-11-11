@@ -377,6 +377,7 @@ export const SubjectsProvider = ({ children }) => {
       checkDailyGoals,
       getSubjectProgress,
       getRecentStudySessions,
+      fetchData,
     }}>
       {children}
     </SubjectsContext.Provider>
