@@ -166,12 +166,12 @@ const SubjectDetail = () => {
     if (!subject) return;
     setIsGenerating(true);
     try {
-      console.log(`Generating comprehensive tasks for subject: ${subject.name}`);
+      console.log(`Generating comprehensive tasks for subject: ${subject?.name}`);
       
       let extractedText = '';
       const perFileCharLimit = 2000; // Take 2000 chars from each file
 
-      if (subject.attachments) {
+      if (subject?.attachments) {
         for (const attachment of subject.attachments) {
           if (attachment.name.toLowerCase().endsWith('.pdf')) {
             const text = await extractTextFromPdf(attachment.path);
@@ -256,10 +256,10 @@ const SubjectDetail = () => {
     setIsScheduling(true);
     try {
       const pending = (subject.tasks || []).filter(t => !t.completed);
-      const map = scheduleTasksDaily(pending, { days: 7, minutesPerDay: (subject.dailyGoalHours || 1) * 60, now: new Date() });
+      const map = scheduleTasksDaily(pending, { days: 7, minutesPerDay: (subject?.dailyGoalHours || 1) * 60, now: new Date() });
       
       // Build the complete updated tasks array with all scheduled due dates
-      const nextTasks = subject.tasks.map(t => {
+      const nextTasks = subject?.tasks?.map(t => {
         if (map.has(t.id)) {
           return { ...t, dueDate: map.get(t.id) };
         }
@@ -275,7 +275,7 @@ const SubjectDetail = () => {
 
   const handleMoveTask = useCallback((task, destIsoKey) => {
     const newDueDate = destIsoKey === 'unplanned' ? null : destIsoKey;
-    const nextTasks = subject.tasks.map(t => t.id === task.id ? { ...t, dueDate: newDueDate } : t);
+    const nextTasks = subject?.tasks?.map(t => t.id === task.id ? { ...t, dueDate: newDueDate } : t);
     updateSubject(subjectId, { tasks: nextTasks });
   }, [subject, subjectId, updateSubject]);
 
@@ -373,7 +373,7 @@ const SubjectDetail = () => {
           <ArrowBackIcon />
         </IconButton>
         <Typography variant="h4" component="h1" sx={{ flexGrow: 1 }}>
-          {subject.name}
+          {subject?.name}
         </Typography>
         <Button
           variant="outlined"
@@ -491,8 +491,8 @@ const SubjectDetail = () => {
               
                   <ModernTimer 
                     subjectId={subjectId}
-                    subjectName={subject.name}
-                    subjectColor={subject.color}
+                    subjectName={subject?.name}
+                    subjectColor={subject?.color}
                     onSessionComplete={(sessionData) => {
                       addStudySession({
                         subjectId: subjectId,
@@ -533,7 +533,7 @@ const SubjectDetail = () => {
                       mb: 1,
                       backgroundColor: '#e0e0e0',
                       '& .MuiLinearProgress-bar': {
-                        backgroundColor: subject.color,
+                        backgroundColor: subject?.color,
                       }
                     }}
                   />
@@ -542,7 +542,7 @@ const SubjectDetail = () => {
                   </Typography>
                   <Box sx={{ mt: 2 }}>
                     <Typography variant="body2">
-                      <strong>Tasks:</strong> {subject.tasks.filter(t => t.completed).length} of {subject.tasks.length} completed
+                      <strong>Tasks:</strong> {subject?.tasks?.filter(t => t.completed).length} of {subject?.tasks?.length} completed
                     </Typography>
                   </Box>
                 </CardContent>
@@ -552,7 +552,7 @@ const SubjectDetail = () => {
                 <CardContent>
                   <Typography variant="h6" gutterBottom>Study Time</Typography>
                   <Box sx={{ textAlign: 'center', py: 2 }}>
-                    <Typography variant="h3" sx={{ color: subject.color }}>
+                    <Typography variant="h3" sx={{ color: subject?.color }}>
                       {totalHours.toFixed(1)}
                     </Typography>
                     <Typography variant="body2" color="textSecondary">
@@ -561,7 +561,7 @@ const SubjectDetail = () => {
                   </Box>
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="body2">
-                    <strong>Daily Goal:</strong> {subject.dailyGoalHours} hours
+                    <strong>Daily Goal:</strong> {subject?.dailyGoalHours} hours
                   </Typography>
                   <Typography variant="body2" sx={{ mt: 1 }}>
                     <strong>Sessions:</strong> {filteredSessions.length}
@@ -577,7 +577,7 @@ const SubjectDetail = () => {
                       <Button size="small" onClick={handleOpenNotesDialog}>Edit</Button>
                     </Box>
                     <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                      {subject.notes}
+                      {subject?.notes}
                     </Typography>
                   </CardContent>
                 </Card>
