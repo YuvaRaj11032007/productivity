@@ -7,7 +7,7 @@ const initialState = {
   // API Configuration
   geminiApiKey: '',
   currentModels: {
-    gemini: 'gemini-1.5-pro',
+    gemini: 'gemini-2.5-flash-lite',
   },
   isConfigured: false,
   
@@ -46,13 +46,13 @@ function aiReducer(state, action) {
       };
       
     case 'SET_MODEL':
-      const { model } = action.payload;
-      aiService.setModel('gemini', model);
+      // Ignore model changes, always use gemini-2.5-flash-lite
+      aiService.setModel('gemini', 'gemini-2.5-flash-lite');
       return {
         ...state,
         currentModels: {
           ...state.currentModels,
-          gemini: model
+          gemini: 'gemini-2.5-flash-lite'
         }
       };
       
@@ -151,18 +151,13 @@ export const AIProvider = ({ children }) => {
     if (savedState) {
       try {
         const parsed = JSON.parse(savedState);
+        // Always force model to gemini-2.5-flash-lite
+        parsed.currentModels = { gemini: 'gemini-2.5-flash-lite' };
         dispatch({ type: 'INITIALIZE_AI_STATE', payload: parsed });
-        
         // Configure AI service with saved keys
         if (parsed.geminiApiKey) {
           aiService.setApiKeys({ geminiApiKey: parsed.geminiApiKey });
-          
-          // Set models if available
-          if (parsed.currentModels) {
-            Object.entries(parsed.currentModels).forEach(([provider, model]) => {
-              aiService.setModel(provider, model);
-            });
-          }
+          aiService.setModel('gemini', 'gemini-2.5-flash-lite');
         }
       } catch (error) {
         console.error('Error loading AI state:', error);
@@ -175,12 +170,12 @@ export const AIProvider = ({ children }) => {
         const parsed = JSON.parse(savedKeys);
         if (parsed.geminiApiKey) {
           aiService.setApiKeys({ geminiApiKey: parsed.geminiApiKey });
+          aiService.setModel('gemini', 'gemini-2.5-flash-lite');
           // Update state so UI shows configured immediately
           dispatch({ type: 'SET_API_KEYS', payload: { geminiKey: parsed.geminiApiKey || '' } });
         }
       } catch {}
     }
-    
     // Load routine memory
     const routineMemory = aiService.getRoutineMemory();
     if (Object.keys(routineMemory).length > 0) {

@@ -14,7 +14,6 @@ const TestFeature = ({ subject, completedTasks, aiService, onMasteryUpdate }) =>
   const [numQuestions, setNumQuestions] = useState(5); // New state for number of questions
   const [difficulty, setDifficulty] = useState('medium'); // New state for difficulty
   const [questionType, setQuestionType] = useState('both'); // New state for question type
-  const [geminiModel, setGeminiModel] = useState('gemini-2.5-pro');
 
   const { subjects, studySessions, dailyGoals, addTest } = useContext(SubjectsContext);
 
@@ -34,7 +33,8 @@ const TestFeature = ({ subject, completedTasks, aiService, onMasteryUpdate }) =>
         currentTime: new Date().toISOString(),
       };
 
-      const aiQuestions = await aiService.generateTestQuestions(subject.name, taskNames, numQuestions, difficulty, questionType, context, geminiModel);
+  // Always use Gemini 2.5 Flash Lite
+  const aiQuestions = await aiService.generateTestQuestions(subject.name, taskNames, numQuestions, difficulty, questionType, context);
       console.log('AI questions received:', aiQuestions);
       setQuestions(aiQuestions);
       setResults(null);
@@ -112,17 +112,9 @@ const TestFeature = ({ subject, completedTasks, aiService, onMasteryUpdate }) =>
             <MenuItem value="descriptive">Descriptive</MenuItem>
           </Select>
         </FormControl>
-        <FormControl sx={{ width: 180 }}>
-          <InputLabel>Gemini Model</InputLabel>
-          <Select
-            value={geminiModel}
-            label="Gemini Model"
-            onChange={(e) => setGeminiModel(e.target.value)}
-          >
-            <MenuItem value="gemini-2.5-pro">Gemini 2.5 Pro</MenuItem>
-            <MenuItem value="gemini-2.5-flash">Gemini 2.5 Flash</MenuItem>
-          </Select>
-        </FormControl>
+        <Box sx={{ width: 180, display: 'flex', alignItems: 'center', pl: 2 }}>
+          <Typography variant="body2" color="text.secondary">Model: Gemini 2.5 Flash Lite</Typography>
+        </Box>
       </Box>
       <Button variant="contained" onClick={generateQuestions} disabled={loading || completedTasks.length === 0} sx={{ mb: 2 }}>
         {loading ? <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} /> : null}

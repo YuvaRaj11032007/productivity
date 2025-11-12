@@ -243,26 +243,12 @@ const Settings = () => {
                 Configure your AI provider API keys to enable intelligent productivity analysis, daily planning, and learning roadmaps.
               </Typography>
 
-              {/* Model Selection */}
-              <FormControl fullWidth sx={{ mb: 3 }}>
-                <InputLabel>AI Model</InputLabel>
-                <Select
-                  value={aiState.currentModels?.gemini || ''}
-                  label="AI Model"
-                  onChange={(e) => setModel(e.target.value)}
-                >
-                  {getAvailableModels().map((model) => (
-                    <MenuItem key={model.id} value={model.id}>
-                      <Box>
-                        <Typography variant="body1">{model.name}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {model.description}
-                        </Typography>
-                      </Box>
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              {/* Model Selection Removed - Always Gemini 2.5 Flash Lite */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body2" color="text.secondary">
+                  AI Model: <strong>Gemini 2.5 Flash Lite</strong> (fixed)
+                </Typography>
+              </Box>
 
               <Box sx={{ mb: 3 }}>
                 <TextField

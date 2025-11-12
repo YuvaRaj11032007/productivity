@@ -7,7 +7,7 @@ class AIService {
     this.groqApiKey = null;
     this.currentProvider = 'gemini'; // 'gemini' or 'groq'
     this.currentModel = {
-      gemini: 'gemini-1.5-pro',
+      gemini: 'gemini-2.5-flash-lite',
       groq: 'llama3-8b-8192'
     };
     this.baseUrls = {
@@ -85,7 +85,11 @@ class AIService {
 
   // Set the current model for a provider
   setModel(provider, modelId) {
-    if (this.availableModels[provider]?.find(m => m.id === modelId)) {
+    // Set Gemini model as requested
+    if (provider === 'gemini' && this.availableModels[provider]?.find(m => m.id === modelId)) {
+      this.currentModel[provider] = modelId;
+      console.log(`AI model for ${provider} set to: ${modelId}`);
+    } else if (this.availableModels[provider]?.find(m => m.id === modelId)) {
       this.currentModel[provider] = modelId;
       console.log(`AI model for ${provider} set to: ${modelId}`);
     } else {
@@ -117,10 +121,11 @@ class AIService {
   }
 
   // Generate test questions from completed tasks
-  async generateTestQuestions(subjectName, completedTaskNames) {
-    // Prompt: Only ask from completed tasks, allow MCQ or open-ended
-    const prompt = `Generate a short test (3-5 questions) for the subject '${subjectName}'. Only use these completed topics: ${completedTaskNames.join(", ")}. Questions can be MCQs or open-ended. For MCQs, provide options and mark the correct one. For open-ended, just ask the question. Return as JSON: [{id, text, type, options?}].`;
-    const response = await this.generateResponse(prompt);
+  async generateTestQuestions(subjectName, completedTaskNames, numQuestions = 5, difficulty = 'medium', questionType = 'both', context = {}) {
+    // Use Gemini 2.5 Flash for test generation
+    this.setModel('gemini', 'gemini-2.5-flash');
+    const prompt = `Generate a short test (${numQuestions} questions, difficulty: ${difficulty}, type: ${questionType}) for the subject '${subjectName}'. Only use these completed topics: ${completedTaskNames.join(", ")}. Questions can be MCQs or open-ended. For MCQs, provide options and mark the correct one. For open-ended, just ask the question. Return as JSON: [{id, text, type, options?}].`;
+    const response = await this.generateResponse(prompt, context);
     // Try to parse JSON
     try {
       const questions = JSON.parse(response);
@@ -403,6 +408,8 @@ Please be specific, actionable, and reference her actual data when relevant. For
    * Analyze productivity patterns
    */
   async analyzeProductivity(subjects, studySessions, dailyGoals) {
+    // Use Gemini 2.5 Flash Lite for all other features
+    this.setModel('gemini', 'gemini-2.5-flash-lite');
     const context = {
       subjects,
       studySessions,
@@ -424,6 +431,7 @@ Please be specific, actionable, and reference her actual data when relevant. For
    * Plan daily schedule
    */
   async planDay(subjects, studySessions, dailyGoals, preferences = {}) {
+    this.setModel('gemini', 'gemini-2.5-flash-lite');
     const context = {
       subjects,
       studySessions,
@@ -446,11 +454,12 @@ Please be specific, actionable, and reference her actual data when relevant. For
    * Generate learning roadmap
    */
   async generateRoadmap(subject, currentLevel, targetLevel, timeframe) {
-    const context = {
-      currentTime: new Date().toISOString()
-    };
+   this.setModel('gemini', 'gemini-2.5-flash-lite');
+   const context = {
+    currentTime: new Date().toISOString()
+   };
 
-    const prompt = `Create a detailed learning roadmap for ${subject}. 
+   const prompt = `Create a detailed learning roadmap for ${subject}. 
 Current Level: ${currentLevel}
 Target Level: ${targetLevel}
 Timeframe: ${timeframe}
@@ -458,54 +467,54 @@ Timeframe: ${timeframe}
 Please provide a comprehensive roadmap with the following structured format:
 
 1. GOAL CLARIFICATION
-   - What achieving the target level means in practical terms
-   - Key skills and knowledge that will be gained
+  - What achieving the target level means in practical terms
+  - Key skills and knowledge that will be gained
 
 2. LEARNING PHASES
-   For each phase, provide:
-   - Phase title (e.g., "Phase 1: Foundations")
-   - Duration estimate
-   - Key objectives
-   - Milestones to track progress
-   - List of specific tasks to complete (start each task with "- ")
-   - Resources and materials for this phase
+  For each phase, provide:
+  - Phase title (e.g., "Phase 1: Foundations")
+  - Duration estimate
+  - Key objectives
+  - Milestones to track progress
+  - List of specific tasks to complete (start each task with "- ")
+  - Resources and materials for this phase
 
 3. WEEKLY/MONTHLY BREAKDOWN
-   - Week-by-week or month-by-month objectives
-   - Practice exercises and projects
-   - Time allocation suggestions (hours per week)
+  - Week-by-week or month-by-month objectives
+  - Practice exercises and projects
+  - Time allocation suggestions (hours per week)
 
 4. CORE TOPICS AND SKILLS
-   - Topic name
-   - Brief description
-   - Estimated time to master
-   - Difficulty level
-   - Prerequisites
+  - Topic name
+  - Brief description
+  - Estimated time to master
+  - Difficulty level
+  - Prerequisites
 
 5. RESOURCES AND MATERIALS
-   - Recommended books, courses, tutorials
-   - Practice platforms and tools
-   - Communities and forums for support
-   - Documentation and reference materials
+  - Recommended books, courses, tutorials
+  - Practice platforms and tools
+  - Communities and forums for support
+  - Documentation and reference materials
 
 6. PRACTICAL APPLICATION
-   - Hands-on projects to build
-   - Real-world applications of the skills
-   - Portfolio-building opportunities
+  - Hands-on projects to build
+  - Real-world applications of the skills
+  - Portfolio-building opportunities
 
 7. ASSESSMENT AND PROGRESS TRACKING
-   - Ways to test knowledge and skills
-   - Checkpoints to evaluate progress
-   - Criteria for moving to the next phase
+  - Ways to test knowledge and skills
+  - Checkpoints to evaluate progress
+  - Criteria for moving to the next phase
 
 8. POTENTIAL CHALLENGES AND SOLUTIONS
-   - Common obstacles learners face
-   - Strategies to overcome difficulties
-   - Tips for staying motivated
+  - Common obstacles learners face
+  - Strategies to overcome difficulties
+  - Tips for staying motivated
 
 Format your response with clear numbered headings and bullet points. Start each task with "- " for easy parsing.`;
 
-    return await this.generateResponse(prompt, context);
+   return await this.generateResponse(prompt, context);
   }
 
   isConfigured(provider = this.currentProvider) {
@@ -560,6 +569,7 @@ Format your response with clear numbered headings and bullet points. Start each 
     }
   }
   async generateSubjectWithSubtopics(subjectName, description, level, timeframe) {
+    this.setModel('gemini', 'gemini-2.5-flash-lite');
     const context = { currentTime: new Date().toISOString() };
     const prompt = `
     Analyze the following request and generate a structured learning plan for a subject. The output must be a JSON object with a "subtopics" array.
@@ -632,6 +642,7 @@ Format your response with clear numbered headings and bullet points. Start each 
 
 
   async getRecommendations(subjects, studySessions, dailyGoals) {
+    this.setModel('gemini', 'gemini-2.5-flash-lite');
     const context = {
       subjects,
       studySessions,
