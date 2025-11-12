@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useCallback } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container, Typography, Box, Paper, Divider, List, ListItem,
@@ -19,7 +19,7 @@ import BookIcon from '@mui/icons-material/Book';
 import { SubjectsContext } from '../contexts/SubjectsContext';
 import aiService from '../services/aiService';
 
-import { scheduleTasksDaily } from '../services/scheduling';
+
 
 import ModernTimer from '../components/ModernTimer';
 
