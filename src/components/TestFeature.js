@@ -113,7 +113,7 @@ const TestFeature = ({ subject, completedTasks, aiService, onMasteryUpdate }) =>
           </Select>
         </FormControl>
         <Box sx={{ width: 180, display: 'flex', alignItems: 'center', pl: 2 }}>
-          <Typography variant="body2" color="text.secondary">Model: Gemini 2.5 Flash Lite</Typography>
+          <Typography variant="body2" color="text.secondary">Model: Gemini 2.5 Flash</Typography>
         </Box>
       </Box>
       <Button variant="contained" onClick={generateQuestions} disabled={loading || completedTasks.length === 0} sx={{ mb: 2 }}>
