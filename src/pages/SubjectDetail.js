@@ -6,8 +6,7 @@ import {
   TextField, Dialog, DialogTitle, DialogContent, DialogActions,
   Grid, Card, CardContent, LinearProgress, Tabs, Tab, CircularProgress
 } from '@mui/material';
-import {
-} from '@mui/material';
+
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import TimerIcon from '@mui/icons-material/Timer';
@@ -19,7 +18,7 @@ import BookIcon from '@mui/icons-material/Book';
 
 import { SubjectsContext } from '../contexts/SubjectsContext';
 import aiService from '../services/aiService';
-import DailyPlannerBoard from '../components/DailyPlannerBoard';
+
 import { scheduleTasksDaily } from '../services/scheduling';
 
 import ModernTimer from '../components/ModernTimer';
@@ -40,9 +39,6 @@ const SubjectDetail = () => {
   const {
     subjects,
     updateSubject,
-    addMultipleTasks,
-    addTask,
-    toggleTaskCompletion,
     addAttachment,
     deleteAttachment,
     addStudySession,
@@ -64,7 +60,7 @@ const SubjectDetail = () => {
   const [newAttachment, setNewAttachment] = useState(null);
   const [newAttachmentData, setNewAttachmentData] = useState(null);
   const [tabValue, setTabValue] = useState(0);
-  const [isGenerating, setIsGenerating] = useState(false);
+
   const [isScheduling, setIsScheduling] = useState(false);
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const [selectedPdf, setSelectedPdf] = useState(null);
@@ -164,111 +160,7 @@ const SubjectDetail = () => {
 
 
 
-  const handleGenerateTasksAI = useCallback(async () => {
-    if (!subject) return;
-    setIsGenerating(true);
-    try {
-      console.log(`Generating comprehensive tasks for subject: ${subject?.name}`);
-      
-      let extractedText = '';
-      const perFileCharLimit = 2000; // Take 2000 chars from each file
 
-      if (subject?.attachments) {
-        for (const attachment of subject.attachments) {
-          if (attachment.name.toLowerCase().endsWith('.pdf')) {
-            const text = await extractTextFromPdf(attachment.path);
-            extractedText += `\n\n--- Snippet from ${attachment.name} ---\n`;
-            extractedText += text.substring(0, perFileCharLimit);
-          }
-        }
-      }
-
-      // Use AI to generate comprehensive task list
-      const context = {
-        subjects: subjects,
-        studySessions: studySessions,
-        dailyGoals: [], // Assuming dailyGoals are not directly relevant here or need to be fetched differently
-        currentTime: new Date().toISOString(),
-        attachments: subject.attachments ? subject.attachments.map(a => a.name) : [],
-        extractedText: extractedText
-      };
-      const responseText = await aiService.generateComprehensiveTaskList(subject.name, 'beginner', '3 months', context);
-      console.log('Raw AI response:', responseText);
-      
-      const aiTasks = aiService.parseTaskListResponse(responseText || '');
-      console.log('Parsed AI tasks:', aiTasks);
-      
-      if (aiTasks.length > 0) {
-        console.log(`Adding ${aiTasks.length} AI-generated tasks to subject ${subject?.name}`);
-        const newTasks = await addMultipleTasks(subjectId, aiTasks);
-        console.log('AI tasks added successfully');
-        
-        if (newTasks) {
-          fetchData();
-        }
-
-      } else {
-        console.log('AI parsing failed, using fallback tasks');
-        // Fallback to comprehensive task list if AI parsing fails
-        const fallbackTasks = [
-          { name: 'Introduction and Setup', description: 'Introduction and Setup', estimatedMinutes: 60, dueDate: null },
-          { name: 'Basic Concepts and Fundamentals', description: 'Basic Concepts and Fundamentals', estimatedMinutes: 120, dueDate: null },
-          { name: 'Core Theory and Principles', description: 'Core Theory and Principles', estimatedMinutes: 180, dueDate: null },
-          { name: 'Practice Problems - Easy Level', description: 'Practice Problems - Easy Level', estimatedMinutes: 90, dueDate: null },
-          { name: 'Practice Problems - Medium Level', description: 'Practice Problems - Medium Level', estimatedMinutes: 120, dueDate: null },
-          { name: 'Advanced Concepts', description: 'Advanced Concepts', estimatedMinutes: 150, dueDate: null },
-          { name: 'Practice Problems - Hard Level', description: 'Practice Problems - Hard Level', estimatedMinutes: 180, dueDate: null },
-          { name: 'Real-world Applications', description: 'Real-world Applications', estimatedMinutes: 120, dueDate: null },
-          { name: 'Review and Consolidation', description: 'Review and Consolidation', estimatedMinutes: 90, dueDate: null },
-          { name: 'Final Assessment and Practice', description: 'Final Assessment and Practice', estimatedMinutes: 120, dueDate: null },
-          { name: 'Advanced Topics and Extensions', description: 'Advanced Topics and Extensions', estimatedMinutes: 150, dueDate: null },
-          { name: 'Project Work and Implementation', description: 'Project Work and Implementation', estimatedMinutes: 240, dueDate: null },
-          { name: 'Mock Tests and Evaluations', description: 'Mock Tests and Evaluations', estimatedMinutes: 180, dueDate: null },
-          { name: 'Revision and Final Preparation', description: 'Revision and Final Preparation', estimatedMinutes: 120, dueDate: null },
-          { name: 'Comprehensive Review and Practice', description: 'Comprehensive Review and Practice', estimatedMinutes: 150, dueDate: null }
-        ];
-        const newTasks = await addMultipleTasks(subjectId, fallbackTasks);
-        console.log('Fallback tasks added successfully');
-        
-        if (newTasks) {
-          fetchData();
-        }
-      }
-      
-    } catch (e) {
-      console.error('AI task generation failed:', e);
-      // Fallback to comprehensive task list if AI fails completely
-      const fallbackTasks = [
-        { name: 'Introduction and Setup', description: 'Introduction and Setup', estimatedMinutes: 60, dueDate: null },
-        { name: 'Basic Concepts and Fundamentals', description: 'Basic Concepts and Fundamentals', estimatedMinutes: 120, dueDate: null },
-        { name: 'Core Theory and Principles', description: 'Core Theory and Principles', estimatedMinutes: 180, dueDate: null },
-        { name: 'Practice Problems - Easy Level', description: 'Practice Problems - Easy Level', estimatedMinutes: 90, dueDate: null },
-        { name: 'Practice Problems - Medium Level', description: 'Practice Problems - Medium Level', estimatedMinutes: 120, dueDate: null },
-        { name: 'Advanced Concepts', description: 'Advanced Concepts', estimatedMinutes: 150, dueDate: null },
-        { name: 'Practice Problems - Hard Level', description: 'Practice Problems - Hard Level', estimatedMinutes: 180, dueDate: null },
-        { name: 'Real-world Applications', description: 'Real-world Applications', estimatedMinutes: 120, dueDate: null },
-        { name: 'Review and Consolidation', description: 'Review and Consolidation', estimatedMinutes: 90, dueDate: null },
-        { name: 'Final Assessment and Practice', description: 'Final Assessment and Practice', estimatedMinutes: 120, dueDate: null },
-        { name: 'Advanced Topics and Extensions', description: 'Advanced Topics and Extensions', estimatedMinutes: 150, dueDate: null },
-        { name: 'Project Work and Implementation', description: 'Project Work and Implementation', estimatedMinutes: 240, dueDate: null },
-        { name: 'Mock Tests and Evaluations', description: 'Mock Tests and Evaluations', estimatedMinutes: 180, dueDate: null },
-        { name: 'Revision and Final Preparation', description: 'Revision and Final Preparation', estimatedMinutes: 120, dueDate: null },
-        { name: 'Comprehensive Review and Practice', description: 'Comprehensive Review and Practice', estimatedMinutes: 150, dueDate: null }
-      ];
-      if (typeof addMultipleTasks === 'function') {
-        const newTasks = await addMultipleTasks(subjectId, fallbackTasks);
-        console.log('Fallback tasks added after AI failure');
-        
-        if (newTasks) {
-          fetchData();
-        }
-      } else {
-        console.error('addMultipleTasks is not a function in catch block');
-      }
-    } finally {
-      setIsGenerating(false);
-    }
-  }, [subject, addMultipleTasks, subjectId, studySessions, subjects, fetchData]);
 
   const handleAutoSchedule = useCallback(() => {
     if (!subject) return;
