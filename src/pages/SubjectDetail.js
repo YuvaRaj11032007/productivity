@@ -41,6 +41,7 @@ const SubjectDetail = () => {
     subjects,
     updateSubject,
     addMultipleTasks,
+    addTask,
     toggleTaskCompletion,
     addAttachment,
     deleteAttachment,
@@ -461,41 +462,7 @@ const SubjectDetail = () => {
                   </Paper>
                   */}
                   <Paper sx={{ p: 3, mb: 3 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                      <Typography variant="h6">Tasks</Typography>
-                      <Box>
-                        <Button
-                          variant="outlined"
-                          color="secondary"
-                          size="small"
-                          sx={{ ml: 1 }}
-                          onClick={handleGenerateTasksAI}
-                          disabled={isGenerating}
-                        >
-                          {isGenerating ? <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} /> : null}
-                          {isGenerating ? 'Generating…' : 'Generate tasks with AI'}
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          sx={{ ml: 1 }}
-                          onClick={handleAutoSchedule}
-                          disabled={isScheduling}
-                        >
-                          {isScheduling ? 'Scheduling…' : 'Auto-schedule'}
-                        </Button>
-                      </Box>
-                    </Box>
                     <TaskList subjectId={subjectId} />
-                  </Paper>
-                  <Paper sx={{ p: 2, mb: 3 }}>
-                    <DailyPlannerBoard
-                      days={7}
-                      subjects={subjects}
-                      subjectId={subjectId}
-                      onMoveTask={handleMoveTask}
-                      onToggleTask={(t) => toggleTaskCompletion(subjectId, t.id)}
-                    />
                   </Paper>
                 </>
               )}

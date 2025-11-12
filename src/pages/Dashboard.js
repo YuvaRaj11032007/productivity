@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container, Typography, Grid, Card, CardContent, CardActions, 
@@ -16,8 +16,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import CategoryIcon from '@mui/icons-material/Category';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import ViewListIcon from '@mui/icons-material/ViewList';
-import DailyPlannerBoard from '../components/DailyPlannerBoard';
-import { useSubjects } from '../contexts/SubjectsContext';
+import { SubjectsContext } from '../contexts/SubjectsContext';
 
 const Dashboard = () => {
   const { 
@@ -28,18 +27,14 @@ const Dashboard = () => {
     getTotalHoursForSubject,
     getSubjectProgress,
     checkDailyGoals,
-    getRecentStudySessions,
-    addTask,
-    toggleTaskCompletion,
-    setTaskFields,
-  } = useSubjects();
+    getRecentStudySessions
+  } = useContext(SubjectsContext);
   
   
   
   const navigate = useNavigate();
   const [openDialog, setOpenDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
-  const [openAddTaskDialog, setOpenAddTaskDialog] = useState(false);
   const [currentSubject, setCurrentSubject] = useState(null);
   const [newSubject, setNewSubject] = useState({
     name: '',
@@ -47,11 +42,6 @@ const Dashboard = () => {
     dailyGoalHours: 1,
     notes: '',
     category: 'Uncategorized'
-  });
-  const [newTask, setNewTask] = useState({
-    name: '',
-    subjectId: '',
-    dueDate: '',
   });
   
   // Dashboard view options
@@ -131,22 +121,6 @@ const Dashboard = () => {
     });
   };
 
-  const handleNewTaskChange = (e) => {
-    const { name, value } = e.target;
-    setNewTask({ ...newTask, [name]: value });
-  };
-
-  const handleAddTask = () => {
-    if (newTask.name.trim() && newTask.subjectId) {
-      addTask(newTask.subjectId, {
-        name: newTask.name,
-        dueDate: newTask.dueDate || null,
-      });
-      setOpenAddTaskDialog(false);
-      setNewTask({ name: '', subjectId: '', dueDate: '' });
-    }
-  };
-
   const handleAddSubject = () => {
     if (newSubject.name.trim()) {
       addSubject(newSubject);
@@ -183,14 +157,6 @@ const Dashboard = () => {
   const handleCardClick = (subjectId) => {
     console.log('Navigating to subject with ID:', subjectId);
     navigate(`/subject/${subjectId}`);
-  };
-
-  const onMoveTask = (task, newDueDate) => {
-    setTaskFields(task.subjectId, task.id, { dueDate: newDueDate });
-  };
-
-  const onToggleTask = (task) => {
-    toggleTaskCompletion(task.subjectId, task.id);
   };
 
   const colorOptions = [
@@ -285,22 +251,11 @@ const Dashboard = () => {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => setOpenAddTaskDialog(true)}
-          >
-            Add Task
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
             onClick={handleOpenDialog}
           >
             Add Subject
           </Button>
         </Box>
-      </Box>
-
-      <Box sx={{ mb: 4 }}>
-        <DailyPlannerBoard subjects={subjects} onMoveTask={onMoveTask} onToggleTask={onToggleTask} />
       </Box>
 
       {/* Dashboard Stats */}
@@ -638,7 +593,7 @@ const Dashboard = () => {
               label="Color"
             >
               {colorOptions.map((color) => (
-                <MenuItem key={color} value={color}>
+                <MenuItem key={category} value={color}>
                   <Box sx={{ 
                     width: 20, 
                     height: 20, 
@@ -683,57 +638,7 @@ const Dashboard = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Add Task Dialog */}
-      <Dialog open={openAddTaskDialog} onClose={() => setOpenAddTaskDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Add New Task</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            name="name"
-            label="Task Name"
-            type="text"
-            fullWidth
-            variant="outlined"
-            value={newTask.name}
-            onChange={handleNewTaskChange}
-            sx={{ mb: 2, mt: 1 }}
-          />
-          <FormControl fullWidth margin="dense" sx={{ mb: 2 }}>
-            <InputLabel id="subject-select-label">Subject</InputLabel>
-            <Select
-              labelId="subject-select-label"
-              name="subjectId"
-              value={newTask.subjectId}
-              onChange={handleNewTaskChange}
-              label="Subject"
-            >
-              {subjects.map((subject) => (
-                <MenuItem key={subject.id} value={subject.id}>
-                  {subject.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <TextField
-            margin="dense"
-            name="dueDate"
-            label="Due Date"
-            type="date"
-            fullWidth
-            variant="outlined"
-            value={newTask.dueDate}
-            onChange={handleNewTaskChange}
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenAddTaskDialog(false)}>Cancel</Button>
-          <Button onClick={handleAddTask} variant="contained">Add Task</Button>
-        </DialogActions>
-      </Dialog>
+
     </Container>
   );
 };
