@@ -593,7 +593,7 @@ const Dashboard = () => {
               label="Color"
             >
               {colorOptions.map((color) => (
-                <MenuItem key={category} value={color}>
+                <MenuItem key={color} value={color}>
                   <Box sx={{ 
                     width: 20, 
                     height: 20, 
