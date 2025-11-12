@@ -19,7 +19,6 @@ import BookIcon from '@mui/icons-material/Book';
 import { SubjectsContext } from '../contexts/SubjectsContext';
 import aiService from '../services/aiService';
 import DailyPlannerBoard from '../components/DailyPlannerBoard';
-import { scheduleTasksDaily } from '../services/scheduling';
 
 import ModernTimer from '../components/ModernTimer';
 

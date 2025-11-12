@@ -25,7 +25,7 @@ import { Visibility, VisibilityOff, AutoAwesome as AIIcon, Key as KeyIcon } from
 import { useAI } from '../contexts/AIContext';
 
 const Settings = () => {
-  const { state: aiState, setApiKeys, setModel, getAvailableModels, testConnection } = useAI();
+  const { state: aiState, setApiKeys, testConnection } = useAI();
   
   // AI Settings state
   const [showGeminiKey, setShowGeminiKey] = useState(false);
