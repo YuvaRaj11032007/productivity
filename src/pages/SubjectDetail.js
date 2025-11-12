@@ -39,7 +39,6 @@ const SubjectDetail = () => {
     subjects,
     updateSubject,
     addMultipleTasks,
-    toggleTaskCompletion,
     addAttachment,
     deleteAttachment,
     addStudySession,
