@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container, Typography, Grid, Card, CardContent, CardActions, 
@@ -16,7 +16,6 @@ import EditIcon from '@mui/icons-material/Edit';
 import CategoryIcon from '@mui/icons-material/Category';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import ViewListIcon from '@mui/icons-material/ViewList';
-import { SubjectsContext } from '../contexts/SubjectsContext';
 import DailyPlannerBoard from '../components/DailyPlannerBoard';
 import { useSubjects } from '../contexts/SubjectsContext';
 
