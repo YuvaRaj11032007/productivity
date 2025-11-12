@@ -43,15 +43,15 @@ class AIService {
 
   async generateComprehensiveTaskList(subjectName, level, timeframe) {
     const prompt = `
-      Create a comprehensive list of topics to cover in the syllabus for **${subjectName}**.
+      Create a comprehensive, structured task list for learning **${subjectName}**.
       - **Current Level:** ${level}
       - **Target Timeframe:** ${timeframe}
 
       **Instructions:**
-      1.  Generate a list of 10-15 high-level topics in a logical, sequential order.
-      2.  The topics should cover all the key concepts of the subject, from beginner to advanced.
-      3.  For each topic, provide an estimated time in minutes for completion.
-      4.  The output must be a simple list of topics, each on a new line, formatted as: 'Topic Name (Estimated Minutes: MM)'.
+      1.  Generate a list of 10-15 high-level tasks in a logical, sequential order.
+      2.  The tasks should cover all the key concepts of the subject, from beginner to advanced.
+      3.  For each task, provide an estimated time in minutes for completion.
+      4.  The output must be a simple list of tasks, each on a new line, formatted as: 'Task Name (Estimated Minutes: MM)'.
 
       **Example:**
       - Introduction to ${subjectName} and its Core Principles (Estimated Minutes: 120)
@@ -69,12 +69,11 @@ class AIService {
     
     for (const line of lines) {
       const trimmedLine = line.replace(/^-/, '').trim();
-      const match = trimmedLine.match(/(.+?)\s*\(Estimated Minutes:\s*(\d+)\)/);
+      const match = trimmedLine.match(/(.+?)\\s*\\(Estimated Minutes:\\s*(\\d+)\\)/);
       
       if (match) {
         tasks.push({
           name: match[1].trim(),
-          description: match[1].trim(),
           estimatedMinutes: parseInt(match[2], 10),
           dueDate: null
         });
