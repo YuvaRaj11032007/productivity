@@ -178,6 +178,7 @@ function App() {
       MuiCssBaseline: {
         styleOverrides: {
           body: {
+            backgroundColor: darkMode ? devThemeColors.background.default : '#f9fafb',
             scrollbarColor: darkMode ? '#30363d #0d1117' : '#e5e7eb #ffffff',
             '&::-webkit-scrollbar, & *::-webkit-scrollbar': {
               width: '8px',
