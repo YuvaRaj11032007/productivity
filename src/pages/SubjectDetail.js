@@ -30,7 +30,7 @@ import SavedTests from '../components/SavedTests';
 import SaveIcon from '@mui/icons-material/Save';
 // import SkillTree from '../components/SkillTree';
 
-import { extractTextFromPdf } from '../services/fileReader';
+
 
 const SubjectDetail = () => {
   const { subjectId } = useParams();
@@ -44,8 +44,7 @@ const SubjectDetail = () => {
     addStudySession,
     studySessions,
     getTotalHoursForSubject,
-    getSubjectProgress,
-    fetchData
+    getSubjectProgress
   } = useContext(SubjectsContext);
 
   const [subject, setSubject] = useState(null);
@@ -61,7 +60,7 @@ const SubjectDetail = () => {
   const [newAttachmentData, setNewAttachmentData] = useState(null);
   const [tabValue, setTabValue] = useState(0);
 
-  const [isScheduling, setIsScheduling] = useState(false);
+
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const [selectedPdf, setSelectedPdf] = useState(null);
 
@@ -162,33 +161,9 @@ const SubjectDetail = () => {
 
 
 
-  const handleAutoSchedule = useCallback(() => {
-    if (!subject) return;
-    setIsScheduling(true);
-    try {
-      const pending = (subject.tasks || []).filter(t => !t.completed);
-      const map = scheduleTasksDaily(pending, { days: 7, minutesPerDay: (subject?.dailyGoalHours || 1) * 60, now: new Date() });
-      
-      // Build the complete updated tasks array with all scheduled due dates
-      const nextTasks = subject?.tasks?.map(t => {
-        if (map.has(t.id)) {
-          return { ...t, dueDate: map.get(t.id) };
-        }
-        return t;
-      });
-      
-      // Update all tasks in a single call
-      updateSubject(subjectId, { tasks: nextTasks });
-    } finally {
-      setIsScheduling(false);
-    }
-  }, [subject, subjectId, updateSubject]);
 
-  const handleMoveTask = useCallback((task, destIsoKey) => {
-    const newDueDate = destIsoKey === 'unplanned' ? null : destIsoKey;
-    const nextTasks = subject?.tasks?.map(t => t.id === task.id ? { ...t, dueDate: newDueDate } : t);
-    updateSubject(subjectId, { tasks: nextTasks });
-  }, [subject, subjectId, updateSubject]);
+
+
 
   const handleOpenSessionDialog = () => {
     setOpenSessionDialog(true);
