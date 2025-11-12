@@ -70,17 +70,21 @@ function App() {
 
   // Listen for changes to the appSettings in localStorage
   useEffect(() => {
-    const handleStorageChange = () => {
-      const savedSettings = localStorage.getItem('appSettings');
-      if (savedSettings) {
-        const settings = JSON.parse(savedSettings);
-        setDarkMode(settings.darkMode || false);
+    const handleStorageChange = (event) => {
+      if (event.key === 'appSettings') {
+        const savedSettings = event.newValue;
+        if (savedSettings) {
+          const settings = JSON.parse(savedSettings);
+          setDarkMode(settings.darkMode || false);
+        }
       }
     };
 
-    // Check for changes every second (since storage events don't fire in the same window)
-    const interval = setInterval(handleStorageChange, 1000);
-    return () => clearInterval(interval);
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   // Create developer-style dark theme colors inspired by the neon hexagon image
@@ -189,31 +193,6 @@ function App() {
             '&::-webkit-scrollbar-track, & *::-webkit-scrollbar-track': {
               backgroundColor: darkMode ? '#0d1117' : '#ffffff',
             },
-            // Add background image for dark mode
-            ...(darkMode && {
-              backgroundImage: 'url(/neon-hexagon-bg.jpg)', // Local image in public folder
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundAttachment: 'fixed',
-              backgroundRepeat: 'no-repeat',
-              backgroundColor: '#0d0d12', // Fallback color
-              '&::before': {
-                content: '""',
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                backgroundColor: 'rgba(13, 13, 18, 0.75)', // Semi-transparent overlay
-                zIndex: -1,
-              },
-              '.App': {
-                backgroundColor: 'transparent', // Make sure App background is transparent
-              },
-              '.app-main': {
-                backgroundColor: 'transparent', // Make sure main content area is transparent
-              }
-            }),
           },
         },
       },
