@@ -1,3 +1,4 @@
+```javascript
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -6,7 +7,7 @@ import {
   DialogContent, DialogActions, TextField, IconButton,
   MenuItem, Select, InputLabel, FormControl,
   Paper, Chip, Menu, ListItemIcon, ListItemText,
-  Badge
+  Badge, Tooltip
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -16,6 +17,9 @@ import EditIcon from '@mui/icons-material/Edit';
 import CategoryIcon from '@mui/icons-material/Category';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import ViewListIcon from '@mui/icons-material/ViewList';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { SubjectsContext } from '../contexts/SubjectsContext';
 
 const Dashboard = () => {
@@ -30,15 +34,13 @@ const Dashboard = () => {
     getRecentStudySessions
   } = useContext(SubjectsContext);
   
-  
-  
   const navigate = useNavigate();
   const [openDialog, setOpenDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [currentSubject, setCurrentSubject] = useState(null);
   const [newSubject, setNewSubject] = useState({
     name: '',
-    color: '#3f51b5',
+    color: '#8b5cf6',
     dailyGoalHours: 1,
     notes: '',
     category: 'Uncategorized'
@@ -101,7 +103,7 @@ const Dashboard = () => {
     setOpenDialog(false);
     setNewSubject({
       name: '',
-      color: '#3f51b5',
+      color: '#8b5cf6',
       dailyGoalHours: 1,
       notes: '',
       category: 'Uncategorized'
@@ -155,28 +157,20 @@ const Dashboard = () => {
   };
 
   const handleCardClick = (subjectId) => {
-    console.log('Navigating to subject with ID:', subjectId);
-    navigate(`/subject/${subjectId}`);
+    navigate(`/ subject / ${ subjectId } `);
   };
 
   const colorOptions = [
-    '#3f51b5', // Indigo
-    '#f50057', // Pink
-    '#00bcd4', // Cyan
-    '#4caf50', // Green
-    '#ff9800', // Orange
-    '#9c27b0', // Purple
-    '#795548', // Brown
-    '#607d8b', // Blue Grey
-    '#e91e63', // Pink
-    '#2196f3', // Blue
-    '#009688', // Teal
-    '#ff5722', // Deep Orange
-    '#673ab7', // Deep Purple
-    '#ffc107', // Amber
+    '#8b5cf6', // Violet
+    '#ec4899', // Pink
+    '#06b6d4', // Cyan
+    '#10b981', // Emerald
+    '#f59e0b', // Amber
+    '#3b82f6', // Blue
+    '#ef4444', // Red
+    '#6366f1', // Indigo
   ];
   
-  // Category options (can be expanded)
   const categoryOptions = [
     'Uncategorized',
     'Academic',
@@ -192,246 +186,28 @@ const Dashboard = () => {
     'Other'
   ];
 
-  return (
-    <Container maxWidth="xl" sx={{ py: 3 }}>
-      {/* Dashboard Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1" fontWeight="bold">
-          Dashboard
-        </Typography>
-        
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          {/* View Mode Toggle */}
-          <Box>
-            <IconButton
-              onClick={() => setViewMode('grid')}
-              color={viewMode === 'grid' ? 'primary' : 'default'}
-              size="small"
-            >
-              <ViewModuleIcon />
-            </IconButton>
-            <IconButton
-              onClick={() => setViewMode('list')}
-              color={viewMode === 'list' ? 'primary' : 'default'}
-              size="small"
-            >
-              <ViewListIcon />
-            </IconButton>
-          </Box>
-          
-          {/* Sort and Filter */}
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>Sort by</InputLabel>
-            <Select
-              value={sortBy}
-              label="Sort by"
-              onChange={(e) => setSortBy(e.target.value)}
-            >
-              <MenuItem value="name">Name</MenuItem>
-              <MenuItem value="progress">Progress</MenuItem>
-              <MenuItem value="recent">Recent</MenuItem>
-            </Select>
-          </FormControl>
-          
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>Category</InputLabel>
-            <Select
-              value={filterCategory}
-              label="Category"
-              onChange={(e) => setFilterCategory(e.target.value)}
-            >
-              {categories.map((category) => (
-                <MenuItem key={category} value={category}>
-                  {category === 'all' ? 'All Categories' : category}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleOpenDialog}
-          >
-            Add Subject
-          </Button>
-        </Box>
-      </Box>
-
-      {/* Dashboard Stats */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper sx={{ p: 2, textAlign: 'center' }}>
-            <Typography variant="h4" color="primary" fontWeight="bold">
-              {subjects.length}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Total Subjects
-            </Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper sx={{ p: 2, textAlign: 'center' }}>
-            <Typography variant="h4" color="primary" fontWeight="bold">
-              {dailyGoalsStatus.filter(s => s.goalMet).length}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Daily Goals Met
-            </Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper sx={{ p: 2, textAlign: 'center' }}>
-            <Typography variant="h4" color="primary" fontWeight="bold">
-              {recentSessions.length}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Sessions This Week
-            </Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper sx={{ p: 2, textAlign: 'center' }}>
-            <Typography variant="h4" color="primary" fontWeight="bold">
-              {Math.round(recentSessions.reduce((total, session) => total + session.duration, 0) / 60)}h
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Total Hours This Week
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
-
-      {/* Subjects Grid/List */}
-      {filteredSubjects.length === 0 ? (
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            No subjects found
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Start by adding your first subject to track your study progress.
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleOpenDialog}
-          >
-            Add Your First Subject
-          </Button>
-        </Paper>
-      ) : (
-        <Grid container spacing={3}>
-          {filteredSubjects.map((subject) => {
-            const progress = getSubjectProgress(subject.id);
-            const totalHours = getTotalHoursForSubject(subject.id);
-            const dailyGoal = dailyGoalsStatus.find(s => s.subject.id === subject.id);
-            
-            return (
-              <Grid 
-                item 
-                xs={12} 
-                sm={viewMode === 'grid' ? 6 : 12} 
-                md={viewMode === 'grid' ? 4 : 12} 
-                lg={viewMode === 'grid' ? 3 : 12} 
-                key={subject.id}
-              >
-                <Card 
-                  sx={{ 
-                    height: '100%',
-                    cursor: 'pointer',
-                    borderLeft: `4px solid ${subject.color}`,
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: (theme) => theme.shadows[4],
-                    },
-                    transition: 'all 0.2s',
-                  }}
-                  onClick={() => handleCardClick(subject.id)}
-                >
-                  <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                      <Box sx={{ flexGrow: 1 }}>
-                        <Typography variant="h6" component="h2" gutterBottom>
-                          {subject.name}
-                        </Typography>
-                        <Chip 
-                          label={subject.category || 'Uncategorized'} 
-                          size="small" 
-                          variant="outlined"
-                          icon={<CategoryIcon />}
-                        />
-                      </Box>
-                      <IconButton
-                        size="small"
-                        onClick={(e) => handleOpenSubjectMenu(e, subject.id)}
-                        sx={{ ml: 1 }}
-                      >
-                        <MoreVertIcon />
-                      </IconButton>
-                    </Box>
-                    
-                    <Box sx={{ mb: 2 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          Progress
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {Math.round(progress)}%
-                        </Typography>
-                      </Box>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={progress} 
-                        sx={{ 
-                          height: 6,
-                          borderRadius: 3,
-                          backgroundColor: `${subject.color}20`,
-                          '& .MuiLinearProgress-bar': {
-                            backgroundColor: subject.color,
-                          }
-                        }}
-                      />
-                    </Box>
-                    
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Total: {totalHours.toFixed(1)}h
-                      </Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Typography variant="body2" color="text.secondary">
-                          Today: {dailyGoal?.hoursStudied.toFixed(1) || 0}/{subject.dailyGoalHours}h
-                        </Typography>
-                        {dailyGoal?.goalMet && (
-                          <Badge color="success" variant="dot" sx={{ ml: 1 }} />
-                        )}
-                      </Box>
-                    </Box>
-                  </CardContent>
-                  
-                  <CardActions>
-                    <Button
-                      size="small"
-                      startIcon={<TimerIcon />}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/subject/${subject.id}`);
-                      }}
-                    >
-                      Start Session
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            );
-          })}
-        </Grid>
-      )}
-
-      {/* Subject Menu */}
-      <Menu
-        anchorEl={subjectMenuAnchorEl}
+  const StatCard = ({ icon, value, label, color }) => (
+    <Paper 
+      className="glass-card"
+      sx={{ 
+        p: 3, 
+        textAlign: 'center', 
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
         open={Boolean(subjectMenuAnchorEl)}
         onClose={handleCloseSubjectMenu}
+        PaperProps={{
+          sx: {
+            bgcolor: 'rgba(20, 20, 25, 0.9)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+          }
+        }}
       >
         <MenuItem 
           onClick={() => {
@@ -443,7 +219,7 @@ const Dashboard = () => {
           }}
         >
           <ListItemIcon>
-            <EditIcon fontSize="small" />
+            <EditIcon fontSize="small" sx={{ color: 'text.secondary' }} />
           </ListItemIcon>
           <ListItemText>Edit</ListItemText>
         </MenuItem>
@@ -452,18 +228,28 @@ const Dashboard = () => {
             handleDeleteSubject(selectedSubjectId);
             handleCloseSubjectMenu();
           }}
+          sx={{ color: 'error.main' }}
         >
           <ListItemIcon>
-            <DeleteIcon fontSize="small" />
+            <DeleteIcon fontSize="small" color="error" />
           </ListItemIcon>
           <ListItemText>Delete</ListItemText>
         </MenuItem>
       </Menu>
 
-      {/* Add Subject Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>Add New Subject</DialogTitle>
-        <DialogContent>
+      {/* Add/Edit Dialogs */}
+      <Dialog 
+        open={openDialog} 
+        onClose={handleCloseDialog} 
+        maxWidth="sm" 
+        fullWidth
+        PaperProps={{
+          className: 'glass-card',
+          sx: { bgcolor: 'rgba(20, 20, 25, 0.95)' }
+        }}
+      >
+        <DialogTitle sx={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>Add New Subject</DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
           <TextField
             autoFocus
             margin="dense"
@@ -474,10 +260,10 @@ const Dashboard = () => {
             variant="outlined"
             value={newSubject.name}
             onChange={handleInputChange}
-            sx={{ mb: 2, mt: 1 }}
+            sx={{ mb: 3, mt: 1 }}
           />
           
-          <FormControl fullWidth margin="dense" sx={{ mb: 2 }}>
+          <FormControl fullWidth margin="dense" sx={{ mb: 3 }}>
             <InputLabel id="category-label">Category</InputLabel>
             <Select
               labelId="category-label"
@@ -494,25 +280,27 @@ const Dashboard = () => {
             </Select>
           </FormControl>
           
-          <FormControl fullWidth margin="dense" sx={{ mb: 2 }}>
-            <InputLabel id="color-label">Color</InputLabel>
+          <FormControl fullWidth margin="dense" sx={{ mb: 3 }}>
+            <InputLabel id="color-label">Color Theme</InputLabel>
             <Select
               labelId="color-label"
               name="color"
               value={newSubject.color}
               onChange={handleInputChange}
-              label="Color"
+              label="Color Theme"
             >
               {colorOptions.map((color) => (
                 <MenuItem key={color} value={color}>
-                  <Box sx={{ 
-                    width: 20, 
-                    height: 20, 
-                    backgroundColor: color, 
-                    mr: 1, 
-                    borderRadius: '50%' 
-                  }} />
-                  {color}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box sx={{ 
+                      width: 20, 
+                      height: 20, 
+                      backgroundColor: color, 
+                      borderRadius: '50%',
+                      boxShadow: `0 0 10px ${ color } `
+                    }} />
+                    {color}
+                  </Box>
                 </MenuItem>
               ))}
             </Select>
@@ -528,7 +316,7 @@ const Dashboard = () => {
             value={newSubject.dailyGoalHours}
             onChange={handleInputChange}
             inputProps={{ min: 0.5, max: 24, step: 0.5 }}
-            sx={{ mb: 2 }}
+            sx={{ mb: 3 }}
           />
           
           <TextField
@@ -543,16 +331,24 @@ const Dashboard = () => {
             onChange={handleInputChange}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
+        <DialogActions sx={{ p: 3, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+          <Button onClick={handleCloseDialog} color="inherit">Cancel</Button>
           <Button onClick={handleAddSubject} variant="contained">Add Subject</Button>
         </DialogActions>
       </Dialog>
 
-      {/* Edit Subject Dialog */}
-      <Dialog open={openEditDialog} onClose={handleCloseEditDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>Edit Subject</DialogTitle>
-        <DialogContent>
+      <Dialog 
+        open={openEditDialog} 
+        onClose={handleCloseEditDialog} 
+        maxWidth="sm" 
+        fullWidth
+        PaperProps={{
+          className: 'glass-card',
+          sx: { bgcolor: 'rgba(20, 20, 25, 0.95)' }
+        }}
+      >
+        <DialogTitle sx={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>Edit Subject</DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
           <TextField
             autoFocus
             margin="dense"
@@ -563,10 +359,10 @@ const Dashboard = () => {
             variant="outlined"
             value={newSubject.name}
             onChange={handleInputChange}
-            sx={{ mb: 2, mt: 1 }}
+            sx={{ mb: 3, mt: 1 }}
           />
           
-          <FormControl fullWidth margin="dense" sx={{ mb: 2 }}>
+          <FormControl fullWidth margin="dense" sx={{ mb: 3 }}>
             <InputLabel id="edit-category-label">Category</InputLabel>
             <Select
               labelId="edit-category-label"
@@ -583,25 +379,27 @@ const Dashboard = () => {
             </Select>
           </FormControl>
           
-          <FormControl fullWidth margin="dense" sx={{ mb: 2 }}>
-            <InputLabel id="edit-color-label">Color</InputLabel>
+          <FormControl fullWidth margin="dense" sx={{ mb: 3 }}>
+            <InputLabel id="edit-color-label">Color Theme</InputLabel>
             <Select
               labelId="edit-color-label"
               name="color"
               value={newSubject.color}
               onChange={handleInputChange}
-              label="Color"
+              label="Color Theme"
             >
               {colorOptions.map((color) => (
                 <MenuItem key={color} value={color}>
-                  <Box sx={{ 
-                    width: 20, 
-                    height: 20, 
-                    backgroundColor: color, 
-                    mr: 1, 
-                    borderRadius: '50%' 
-                  }} />
-                  {color}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box sx={{ 
+                      width: 20, 
+                      height: 20, 
+                      backgroundColor: color, 
+                      borderRadius: '50%',
+                      boxShadow: `0 0 10px ${ color } `
+                    }} />
+                    {color}
+                  </Box>
                 </MenuItem>
               ))}
             </Select>
@@ -617,7 +415,7 @@ const Dashboard = () => {
             value={newSubject.dailyGoalHours}
             onChange={handleInputChange}
             inputProps={{ min: 0.5, max: 24, step: 0.5 }}
-            sx={{ mb: 2 }}
+            sx={{ mb: 3 }}
           />
           
           <TextField
@@ -632,15 +430,14 @@ const Dashboard = () => {
             onChange={handleInputChange}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseEditDialog}>Cancel</Button>
+        <DialogActions sx={{ p: 3, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+          <Button onClick={handleCloseEditDialog} color="inherit">Cancel</Button>
           <Button onClick={handleUpdateSubject} variant="contained">Update Subject</Button>
         </DialogActions>
       </Dialog>
-
-
     </Container>
   );
 };
 
 export default Dashboard;
+```
