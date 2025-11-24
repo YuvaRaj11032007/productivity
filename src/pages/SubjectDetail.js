@@ -17,6 +17,7 @@ import AlarmIcon from '@mui/icons-material/Alarm';
 import BookIcon from '@mui/icons-material/Book';
 import SaveIcon from '@mui/icons-material/Save';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import EditIcon from '@mui/icons-material/Edit';
 
 import { SubjectsContext } from '../contexts/SubjectsContext';
 import aiService from '../services/aiService';
