@@ -79,7 +79,7 @@ const SubjectDetail = () => {
     session.subjectId === subjectId
   ).sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  const handleGenerateTasksAI = useCallback(async () => {
+  const handleGenerateTopicsAI = useCallback(async () => {
     if (!subject) return;
     setIsGenerating(true);
     try {
@@ -102,8 +102,12 @@ const SubjectDetail = () => {
         dailyGoals: [],
         currentTime: new Date().toISOString(),
         attachments: subject.attachments ? subject.attachments.map(a => a.name) : [],
-        extractedText: extractedText
+        extractedText: extractedText,
+        notes: subjectNotes // Pass current notes to AI
       };
+
+      // Changed from generateComprehensiveTaskList to generateComprehensiveTopicsList (conceptually, though function name in service might still be same for now, we will update service next)
+      // For now, keeping the service function call but we will update the service logic to be "Topics" focused.
       const responseText = await aiService.generateComprehensiveTaskList(subject.name, 'beginner', '3 months', context);
 
       const aiTasks = aiService.parseTaskListResponse(responseText || '');
@@ -128,11 +132,11 @@ const SubjectDetail = () => {
       }
 
     } catch (e) {
-      console.error('AI task generation failed:', e);
+      console.error('AI topic generation failed:', e);
     } finally {
       setIsGenerating(false);
     }
-  }, [subject, addMultipleTasks, subjectId, studySessions, subjects, fetchData]);
+  }, [subject, addMultipleTasks, subjectId, studySessions, subjects, fetchData, subjectNotes]);
 
   const handleOpenSessionDialog = () => {
     setOpenSessionDialog(true);
@@ -208,6 +212,24 @@ const SubjectDetail = () => {
     handleCloseNotesDialog();
   };
 
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0]; // Handle first file for now, or loop for multiple
+      setNewAttachment(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewAttachmentData(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
@@ -253,7 +275,7 @@ const SubjectDetail = () => {
                 }}
               />
               <Typography variant="body2" color="text.secondary">
-                {subject.tasks?.length || 0} Tasks • {totalHours.toFixed(1)} Hours Studied
+                {subject.tasks?.length || 0} Topics • {totalHours.toFixed(1)} Hours Studied
               </Typography>
             </Stack>
           </Box>
@@ -274,14 +296,14 @@ const SubjectDetail = () => {
             <Button
               variant="contained"
               startIcon={isGenerating ? <CircularProgress size={20} color="inherit" /> : <AutoAwesomeIcon />}
-              onClick={handleGenerateTasksAI}
+              onClick={handleGenerateTopicsAI}
               disabled={isGenerating}
               sx={{
                 background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
                 boxShadow: '0 4px 20px rgba(6, 182, 212, 0.4)',
               }}
             >
-              {isGenerating ? 'Generating...' : 'AI Plan'}
+              {isGenerating ? 'Generating...' : 'Generate Topics'}
             </Button>
             <Button
               variant="contained"
@@ -324,7 +346,7 @@ const SubjectDetail = () => {
                 }
               }}
             >
-              <Tab icon={<AddIcon />} label="Tasks" iconPosition="start" />
+              <Tab icon={<AddIcon />} label="Topics" iconPosition="start" />
               <Tab icon={<TimerIcon />} label="Timer" iconPosition="start" />
               <Tab icon={<BookIcon />} label="Practice" iconPosition="start" />
               <Tab icon={<SaveIcon />} label="Saved Tests" iconPosition="start" />
@@ -419,7 +441,7 @@ const SubjectDetail = () => {
 
             <Box sx={{ mt: 2 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body2" color="text.secondary">Tasks Completed</Typography>
+                <Typography variant="body2" color="text.secondary">Topics Completed</Typography>
                 <Typography variant="body2" fontWeight="bold">
                   {subject?.tasks?.filter(t => t.completed).length}/{subject?.tasks?.length}
                 </Typography>
@@ -565,7 +587,19 @@ const SubjectDetail = () => {
         }}
       >
         <DialogTitle sx={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>Subject Notes</DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
+        <DialogContent sx={{ pt: 3 }} onDragOver={handleDragOver} onDrop={handleDrop}>
+          <Box sx={{
+            border: '2px dashed rgba(255,255,255,0.1)',
+            borderRadius: 2,
+            p: 2,
+            mb: 2,
+            textAlign: 'center',
+            bgcolor: 'rgba(255,255,255,0.02)'
+          }}>
+            <Typography variant="body2" color="text.secondary">
+              Drag and drop files here or use the button below
+            </Typography>
+          </Box>
           <TextField
             autoFocus
             margin="dense"

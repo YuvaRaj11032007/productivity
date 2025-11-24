@@ -41,7 +41,7 @@ function TaskList({ subjectId }) {
   return (
     <Box sx={{ p: 2 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h6">Tasks</Typography>
+        <Typography variant="h6">Topics</Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box sx={{ minWidth: 120 }}>
             <Typography variant="body2" color="text.secondary">Progress</Typography>
@@ -65,7 +65,7 @@ function TaskList({ subjectId }) {
         <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
           <TextField
             fullWidth
-            placeholder="Add new task"
+            placeholder="Add new topic"
             value={newTaskTitle}
             onChange={(e) => setNewTaskTitle(e.target.value)}
             size="small"
@@ -84,11 +84,11 @@ function TaskList({ subjectId }) {
       {/* Pending Tasks */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="subtitle1" gutterBottom>
-          Pending Tasks ({pendingTasks.length})
+          Pending Topics ({pendingTasks.length})
         </Typography>
         {pendingTasks.length === 0 ? (
           <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
-            No pending tasks. Great job!
+            No pending topics. Great job!
           </Typography>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -108,7 +108,7 @@ function TaskList({ subjectId }) {
       {completedTasks.length > 0 && (
         <Box>
           <Typography variant="subtitle1" gutterBottom>
-            Completed Tasks ({completedTasks.length})
+            Completed Topics ({completedTasks.length})
           </Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             {completedTasks.map(task => (

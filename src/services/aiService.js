@@ -41,36 +41,42 @@ class AIService {
     };
   }
 
-  async generateComprehensiveTaskList(subjectName, level, timeframe) {
+  async generateComprehensiveTaskList(subjectName, level, timeframe, context = {}) {
+    const notesContext = context.notes ? `\n\n**User Notes:**\n${context.notes}` : '';
+    const extractedTextContext = context.extractedText ? `\n\n**Extracted Text from Files:**\n${context.extractedText}` : '';
+
     const prompt = `
-      Create a comprehensive, structured task list for learning **${subjectName}**.
+      Create a comprehensive, structured list of **Topics** for learning **${subjectName}**.
       - **Current Level:** ${level}
       - **Target Timeframe:** ${timeframe}
+      ${notesContext}
+      ${extractedTextContext}
 
       **Instructions:**
-      1.  Generate a list of 10-15 high-level tasks in a logical, sequential order.
-      2.  The tasks should cover all the key concepts of the subject, from beginner to advanced.
-      3.  For each task, provide an estimated time in minutes for completion.
-      4.  The output must be a simple list of tasks, each on a new line, formatted as: 'Task Name (Estimated Minutes: MM)'.
+      1.  Generate a list of 10-15 high-level **Topics** in a logical, sequential order.
+      2.  The topics should cover all the key concepts of the subject, from beginner to advanced.
+      3.  **CRITICAL:** If "User Notes" or "Extracted Text" are provided, you **MUST** prioritize generating topics that cover the content found in those notes/text.
+      4.  For each topic, provide an estimated time in minutes for completion.
+      5.  The output must be a simple list of topics, each on a new line, formatted as: 'Topic Name (Estimated Minutes: MM)'.
 
       **Example:**
       - Introduction to ${subjectName} and its Core Principles (Estimated Minutes: 120)
       - Foundational Concepts of ${subjectName} (Estimated Minutes: 180)
       - Advanced Topic in ${subjectName} (Estimated Minutes: 240)
     `;
-    return await this.generateResponse(prompt);
+    return await this.generateResponse(prompt, context);
   }
 
   parseTaskListResponse(response) {
     if (!response) return [];
-    
+
     const tasks = [];
     const lines = response.split('\\n');
-    
+
     for (const line of lines) {
       const trimmedLine = line.replace(/^-/, '').trim();
       const match = trimmedLine.match(/(.+?)\\s*\\(Estimated Minutes:\\s*(\\d+)\\)/);
-      
+
       if (match) {
         tasks.push({
           name: match[1].trim(),
@@ -79,7 +85,7 @@ class AIService {
         });
       }
     }
-    
+
     return tasks;
   }
 
@@ -214,7 +220,7 @@ class AIService {
    */
   async callGroq(prompt, context) {
     const model = this.currentModel.groq;
-    
+
     try {
       const response = await axios.post(
         this.baseUrls.groq,
@@ -246,9 +252,9 @@ class AIService {
       if (response.data?.choices?.[0]?.message?.content) {
         return response.data.choices[0].message.content;
       }
-      
+
       throw new Error(`Invalid or empty response from Groq API (${model})`);
-      
+
     } catch (error) {
       if (error.response) {
         // API returned an error response
@@ -269,7 +275,7 @@ class AIService {
    */
   buildPrompt(userMessage, context) {
     const contextInfo = this.formatContext(context);
-    
+
     return `
 You are Lily's personal AI productivity assistant for her study tracking application. You have access to all her study data and can provide intelligent insights.
 
@@ -318,7 +324,7 @@ Please be specific, actionable, and reference her actual data when relevant. For
       const recentSessions = context.studySessions.slice(-10); // Last 10 sessions
       recentSessions.forEach(session => {
         const subjectName = context.subjects?.find(s => s.id === session.subjectId)?.name || 'Unknown';
-        formattedContext += `- ${subjectName}: ${Math.round(session.duration/60)}h on ${new Date(session.date).toLocaleDateString()}\n`;
+        formattedContext += `- ${subjectName}: ${Math.round(session.duration / 60)}h on ${new Date(session.date).toLocaleDateString()}\n`;
       });
       formattedContext += '\n';
     }
@@ -454,12 +460,12 @@ Please be specific, actionable, and reference her actual data when relevant. For
    * Generate learning roadmap
    */
   async generateRoadmap(subject, currentLevel, targetLevel, timeframe) {
-   this.setModel('gemini', 'gemini-2.5-flash-lite');
-   const context = {
-    currentTime: new Date().toISOString()
-   };
+    this.setModel('gemini', 'gemini-2.5-flash-lite');
+    const context = {
+      currentTime: new Date().toISOString()
+    };
 
-   const prompt = `Create a detailed learning roadmap for ${subject}. 
+    const prompt = `Create a detailed learning roadmap for ${subject}. 
 Current Level: ${currentLevel}
 Target Level: ${targetLevel}
 Timeframe: ${timeframe}
@@ -514,7 +520,7 @@ Please provide a comprehensive roadmap with the following structured format:
 
 Format your response with clear numbered headings and bullet points. Start each task with "- " for easy parsing.`;
 
-   return await this.generateResponse(prompt, context);
+    return await this.generateResponse(prompt, context);
   }
 
   isConfigured(provider = this.currentProvider) {
@@ -618,27 +624,27 @@ Format your response with clear numbered headings and bullet points. Start each 
     let currentPhase = null;
 
     for (const line of lines) {
-        if (line.match(/^\d+\.\s+LEARNING PHASES/)) continue;
-        if (line.match(/^\s*Phase \d+:/)) {
-            if (currentPhase) phases.push(currentPhase);
-            const name = line.replace(/^\s*Phase \d+:\s*/, '').trim();
-            currentPhase = {
-                id: `phase-${Date.now()}-${phases.length}`,
-                name: name,
-                tasks: []
-            };
-        } else if (currentPhase && line.match(/^\s*-\s+/)) {
-            currentPhase.tasks.push({
-                id: `task-${Date.now()}-${currentPhase.tasks.length}`,
-                name: line.replace(/^\s*-\s*/, '').trim(),
-                completed: false
-            });
-        }
+      if (line.match(/^\d+\.\s+LEARNING PHASES/)) continue;
+      if (line.match(/^\s*Phase \d+:/)) {
+        if (currentPhase) phases.push(currentPhase);
+        const name = line.replace(/^\s*Phase \d+:\s*/, '').trim();
+        currentPhase = {
+          id: `phase-${Date.now()}-${phases.length}`,
+          name: name,
+          tasks: []
+        };
+      } else if (currentPhase && line.match(/^\s*-\s+/)) {
+        currentPhase.tasks.push({
+          id: `task-${Date.now()}-${currentPhase.tasks.length}`,
+          name: line.replace(/^\s*-\s*/, '').trim(),
+          completed: false
+        });
+      }
     }
     if (currentPhase) phases.push(currentPhase);
 
     return phases;
-}
+  }
 
 
   async getRecommendations(subjects, studySessions, dailyGoals) {
