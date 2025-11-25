@@ -27,6 +27,7 @@ import TaskList from '../components/TaskList';
 import TestFeature from '../components/TestFeature';
 import PdfViewer from '../components/PdfViewer';
 import SavedTests from '../components/SavedTests';
+import FlashcardList from '../components/FlashcardList';
 import { extractTextFromPdf } from '../services/fileReader';
 
 const SubjectDetail = () => {
@@ -42,7 +43,10 @@ const SubjectDetail = () => {
     studySessions,
     getTotalHoursForSubject,
     getSubjectProgress,
-    fetchData
+    fetchData,
+    fetchFlashcards,
+    addMultipleFlashcards,
+    deleteFlashcard
   } = useContext(SubjectsContext);
 
   const [subject, setSubject] = useState(null);
@@ -64,6 +68,9 @@ const SubjectDetail = () => {
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const [selectedPdf, setSelectedPdf] = useState(null);
 
+  const [flashcards, setFlashcards] = useState([]);
+  const [isGeneratingFlashcards, setIsGeneratingFlashcards] = useState(false);
+
   const completedTasks = subject?.tasks?.filter(t => t.completed) || [];
 
   useEffect(() => {
@@ -72,14 +79,57 @@ const SubjectDetail = () => {
       setSubject(foundSubject);
       setSubjectNotes(foundSubject.notes || '');
       setLoading(false);
+
+      const loadFlashcards = async () => {
+        const cards = await fetchFlashcards(parseInt(subjectId));
+        setFlashcards(cards || []);
+      };
+      loadFlashcards();
     } else if (subjects.length > 0) { // only navigate if subjects have loaded
       navigate('/');
     }
-  }, [subjectId, subjects, navigate]);
+  }, [subjectId, subjects, navigate, fetchFlashcards]);
 
   const filteredSessions = studySessions.filter(session =>
     session.subjectId === subjectId
   ).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  const handleGenerateFlashcards = async () => {
+    if (!subject.notes && (!subject.attachments || subject.attachments.length === 0)) {
+      alert("Please add notes or attachments first so the AI can generate flashcards.");
+      return;
+    }
+
+    setIsGeneratingFlashcards(true);
+    try {
+      // Combine notes and potentially text from attachments (if we had a way to get it easily here, for now just notes)
+      // Ideally we'd extract text from attachments on the fly or use stored text. 
+      // For this MVP, let's use subject.notes and maybe a placeholder for attachment text if available.
+
+      const generatedCards = await aiService.generateFlashcards(subject.name, subject.notes || "No notes provided.", 5);
+
+      if (generatedCards && generatedCards.length > 0) {
+        await addMultipleFlashcards(generatedCards.map(card => ({
+          subject_id: subjectId,
+          front: card.front,
+          back: card.back
+        })));
+
+        // Refresh flashcards
+        const updatedCards = await fetchFlashcards(subjectId);
+        setFlashcards(updatedCards);
+      }
+    } catch (error) {
+      console.error("Error generating flashcards:", error);
+    } finally {
+      setIsGeneratingFlashcards(false);
+    }
+  };
+
+  const handleDeleteFlashcard = async (id) => {
+    await deleteFlashcard(id);
+    setFlashcards(prev => prev.filter(c => c.id !== id));
+  };
 
   const handleGenerateTopicsAI = useCallback(async () => {
     if (!subject) return;
@@ -199,13 +249,108 @@ const SubjectDetail = () => {
     fetchData(); // Refresh to show new attachments
   };
 
-  // ... existing handleDragOver ...
+  const handleConfirmAddTopics = async () => {
+    const topicsToAdd = generatedTopics.filter((_, index) => selectedTopics.includes(index));
+    if (topicsToAdd.length > 0) {
+      await addMultipleTasks(subjectId, topicsToAdd);
+      fetchData();
+    }
+    setOpenTopicReviewDialog(false);
+    setGeneratedTopics([]);
+    setSelectedTopics([]);
+  };
 
-  // ... existing handleDrop ...
+  const handleToggleTopicSelection = (index) => {
+    const newSelected = [...selectedTopics];
+    if (newSelected.includes(index)) {
+      newSelected.splice(newSelected.indexOf(index), 1);
+    } else {
+      newSelected.push(index);
+    }
+    setSelectedTopics(newSelected);
+  };
 
-  // ... existing handleTabChange ...
+  const handleOpenSessionDialog = () => {
+    setOpenSessionDialog(true);
+  };
 
-  // ... existing loading check ...
+  const handleCloseSessionDialog = () => {
+    setOpenSessionDialog(false);
+    setNewSession({
+      duration: 60,
+      notes: ''
+    });
+  };
+
+  const handleSessionInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewSession({
+      ...newSession,
+      [name]: value
+    });
+  };
+
+  const handleAddSession = () => {
+    addStudySession({
+      subjectId: subjectId,
+      duration: Number(newSession.duration),
+      notes: newSession.notes,
+      date: new Date().toISOString()
+    });
+    handleCloseSessionDialog();
+  };
+
+  const handleOpenNotesDialog = () => {
+    setOpenNotesDialog(true);
+  };
+
+  const handleCloseNotesDialog = () => {
+    setOpenNotesDialog(false);
+  };
+
+  const handleOpenPdf = (file) => {
+    setSelectedPdf(file);
+    setPdfViewerOpen(true);
+  };
+
+  const handleClosePdf = () => {
+    setPdfViewerOpen(false);
+    setSelectedPdf(null);
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setNewAttachments(prev => [...prev, ...Array.from(e.target.files)]);
+    }
+  };
+
+  const handleRemoveNewAttachment = (index) => {
+    setNewAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      setNewAttachments(prev => [...prev, ...Array.from(files)]);
+    }
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress sx={{ color: 'primary.main' }} />
+      </Box>
+    );
+  }
 
   if (!subject) return null;
 
@@ -327,6 +472,7 @@ const SubjectDetail = () => {
               <Tab icon={<TimerIcon />} label="Timer" iconPosition="start" />
               <Tab icon={<BookIcon />} label="Practice" iconPosition="start" />
               <Tab icon={<SaveIcon />} label="Saved Tests" iconPosition="start" />
+              <Tab icon={<AutoAwesomeIcon />} label="Flashcards" iconPosition="start" />
             </Tabs>
           </Paper>
 
@@ -371,6 +517,27 @@ const SubjectDetail = () => {
 
             {tabValue === 3 && (
               <SavedTests subject={subject} />
+            )}
+
+            {tabValue === 4 && (
+              <Paper className="glass-card" sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Typography variant="h6" fontWeight="bold">AI Flashcards</Typography>
+                  <Button
+                    variant="contained"
+                    startIcon={isGeneratingFlashcards ? <CircularProgress size={20} color="inherit" /> : <AutoAwesomeIcon />}
+                    onClick={handleGenerateFlashcards}
+                    disabled={isGeneratingFlashcards}
+                    sx={{
+                      background: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
+                      boxShadow: '0 4px 20px rgba(236, 72, 153, 0.4)',
+                    }}
+                  >
+                    {isGeneratingFlashcards ? 'Generating...' : 'Generate New Cards'}
+                  </Button>
+                </Box>
+                <FlashcardList flashcards={flashcards} onDelete={handleDeleteFlashcard} />
+              </Paper>
             )}
           </Box>
         </Grid>

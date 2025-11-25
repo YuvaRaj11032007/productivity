@@ -13,7 +13,7 @@ export const SubjectsProvider = ({ children }) => {
 
   const fetchData = useCallback(async () => {
     if (user) {
-      
+
       const { data: subjectsData, error: subjectsError } = await supabase
         .from('subjects')
         .select('*, tasks(*), blogs(*), tests(*), attachments(*)')
@@ -26,7 +26,7 @@ export const SubjectsProvider = ({ children }) => {
         .from('study_sessions')
         .select('*')
         .eq('user_id', user.id);
-      
+
       if (sessionsError) console.error('Error fetching study sessions:', sessionsError);
       else setStudySessions(sessionsData || []);
 
@@ -42,7 +42,7 @@ export const SubjectsProvider = ({ children }) => {
         setClassSchedule(profileData?.class_schedule || []);
       }
 
-      
+
     }
   }, [user, setSubjects, setStudySessions, setTimetableImage, setClassSchedule]);
 
@@ -237,7 +237,7 @@ export const SubjectsProvider = ({ children }) => {
       console.error('Error uploading attachment:', error);
       return;
     }
-    
+
     const { error: dbError } = await supabase.from('attachments').insert([{
       subject_id: subjectId,
       user_id: user.id,
@@ -284,7 +284,7 @@ export const SubjectsProvider = ({ children }) => {
   const getTotalHoursForDay = (date) => {
     const targetDate = new Date(date);
     targetDate.setHours(0, 0, 0, 0);
-    
+
     return studySessions
       .filter(session => {
         const sessionDate = new Date(session.date);
@@ -298,7 +298,7 @@ export const SubjectsProvider = ({ children }) => {
   const getSessionsForDay = (date) => {
     const targetDate = new Date(date);
     targetDate.setHours(0, 0, 0, 0);
-    
+
     return studySessions.filter(session => {
       const sessionDate = new Date(session.date);
       sessionDate.setHours(0, 0, 0, 0);
@@ -310,17 +310,17 @@ export const SubjectsProvider = ({ children }) => {
   const checkDailyGoals = (date = new Date()) => {
     const targetDate = new Date(date);
     targetDate.setHours(0, 0, 0, 0);
-    
+
     return subjects.map(subject => {
       const totalHours = studySessions
         .filter(session => {
           const sessionDate = new Date(session.date);
           sessionDate.setHours(0, 0, 0, 0);
-          return session.subjectId === subject.id && 
-                 sessionDate.getTime() === targetDate.getTime();
+          return session.subjectId === subject.id &&
+            sessionDate.getTime() === targetDate.getTime();
         })
         .reduce((total, session) => total + (session.duration / 60), 0);
-      
+
       return {
         subject,
         goalMet: totalHours >= subject.dailyGoalHours,
@@ -333,16 +333,16 @@ export const SubjectsProvider = ({ children }) => {
   const getSubjectProgress = (subjectId) => {
     const subject = subjects.find(s => s.id === subjectId);
     if (!subject || subject.tasks.length === 0) return 0;
-    
+
     const completedTasks = subject.tasks.filter(task => task.completed).length;
     return (completedTasks / subject.tasks.length) * 100;
   };
-  
+
   // Get recent study sessions for a given number of days
   const getRecentStudySessions = (days = 7) => {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
-    
+
     return studySessions
       .filter(session => new Date(session.date) >= cutoffDate)
       .sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -379,7 +379,80 @@ export const SubjectsProvider = ({ children }) => {
       checkDailyGoals,
       getSubjectProgress,
       getRecentStudySessions,
+
       fetchData,
+      // Flashcard functions
+      fetchFlashcards: async (subjectId) => {
+        if (!user) return [];
+        const { data, error } = await supabase
+          .from('flashcards')
+          .select('*')
+          .eq('subject_id', subjectId)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching flashcards:', error);
+          return [];
+        }
+        return data;
+      },
+      addFlashcard: async (flashcard) => {
+        if (!user) return null;
+        const { data, error } = await supabase
+          .from('flashcards')
+          .insert([{ ...flashcard, user_id: user.id }])
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error adding flashcard:', error);
+          return null;
+        }
+        return data;
+      },
+      addMultipleFlashcards: async (flashcards) => {
+        if (!user) return null;
+        const cardsWithUser = flashcards.map(card => ({ ...card, user_id: user.id }));
+        const { data, error } = await supabase
+          .from('flashcards')
+          .insert(cardsWithUser)
+          .select();
+
+        if (error) {
+          console.error('Error adding multiple flashcards:', error);
+          return null;
+        }
+        return data;
+      },
+      updateFlashcard: async (id, updates) => {
+        if (!user) return null;
+        const { data, error } = await supabase
+          .from('flashcards')
+          .update(updates)
+          .eq('id', id)
+          .eq('user_id', user.id)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error updating flashcard:', error);
+          return null;
+        }
+        return data;
+      },
+      deleteFlashcard: async (id) => {
+        if (!user) return;
+        const { error } = await supabase
+          .from('flashcards')
+          .delete()
+          .eq('id', id)
+          .eq('user_id', user.id);
+
+        if (error) {
+          console.error('Error deleting flashcard:', error);
+        }
+      }
     }}>
       {children}
     </SubjectsContext.Provider>

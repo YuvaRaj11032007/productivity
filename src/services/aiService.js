@@ -685,6 +685,67 @@ Format the output as a JSON array of strings. For example: ["Recommendation 1", 
     }
   }
 
+  async generateFlashcards(subjectName, notes, count = 5, context = {}) {
+    this.setModel('gemini', 'gemini-2.5-flash-lite');
+    const fullContext = {
+      currentTime: new Date().toISOString(),
+      ...context
+    };
+
+    const prompt = `
+    Create ${count} study flashcards for the subject "${subjectName}" based on the following notes/content:
+
+    "${notes.substring(0, 5000)}"
+
+    Return the response as a JSON object with a "flashcards" array. Each item should have "front" (question/term) and "back" (answer/definition).
+
+    Example JSON:
+    {
+      "flashcards": [
+        { "front": "What is React?", "back": "A JavaScript library for building user interfaces." },
+        { "front": "Explain JSX", "back": "A syntax extension for JavaScript that looks like XML." }
+      ]
+    }
+    `;
+
+    const response = await this.generateResponse(prompt, fullContext);
+
+    try {
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return parsed.flashcards || [];
+      }
+      return [];
+    } catch (e) {
+      console.error("Failed to parse flashcards", e);
+      return [];
+    }
+  }
+
+  async generateTutorResponse(question, pageContent, subjectName, context = {}) {
+    this.setModel('gemini', 'gemini-2.5-flash-lite');
+    const fullContext = {
+      currentTime: new Date().toISOString(),
+      ...context
+    };
+
+    const prompt = `
+    You are an expert AI Tutor teaching "${subjectName}".
+    The student is currently reading a page with the following content:
+    
+    """
+    ${pageContent}
+    """
+
+    The student asks: "${question}"
+
+    Please answer the question clearly and concisely, using the provided page content as your primary source. Explain concepts simply as if you are a friendly teacher. If the answer isn't in the page content, you can use your general knowledge but mention that it's outside the current page's scope.
+    `;
+
+    return await this.generateResponse(prompt, fullContext);
+  }
+
   getCurrentModel(provider = this.currentProvider) {
     return this.currentModel[provider];
   }

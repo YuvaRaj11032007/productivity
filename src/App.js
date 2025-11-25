@@ -81,7 +81,7 @@ function App() {
 
   const theme = createTheme({
     palette: {
-      mode: 'dark', // Always dark mode for this design
+      mode: darkMode ? 'dark' : 'light',
       primary: {
         main: '#8b5cf6',
         light: '#a78bfa',
@@ -93,12 +93,12 @@ function App() {
         dark: '#db2777',
       },
       background: {
-        default: '#050505',
-        paper: 'rgba(20, 20, 25, 0.6)',
+        default: darkMode ? '#050505' : '#f8fafc',
+        paper: darkMode ? 'rgba(20, 20, 25, 0.6)' : 'rgba(255, 255, 255, 0.8)',
       },
       text: {
-        primary: '#ffffff',
-        secondary: 'rgba(255, 255, 255, 0.7)',
+        primary: darkMode ? '#ffffff' : '#1e293b',
+        secondary: darkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(30, 41, 59, 0.7)',
       },
       success: {
         main: '#10b981',
@@ -130,10 +130,13 @@ function App() {
       MuiCssBaseline: {
         styleOverrides: {
           body: {
-            backgroundColor: '#050505',
-            backgroundImage: `
+            backgroundColor: darkMode ? '#050505' : '#f8fafc',
+            backgroundImage: darkMode ? `
               radial-gradient(circle at 15% 50%, rgba(76, 29, 149, 0.15), transparent 25%),
               radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.15), transparent 25%)
+            ` : `
+              radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.05), transparent 25%),
+              radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.05), transparent 25%)
             `,
             backgroundAttachment: 'fixed',
           },
@@ -156,7 +159,7 @@ function App() {
             },
           },
           outlined: {
-            borderColor: 'rgba(255, 255, 255, 0.2)',
+            borderColor: darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
             '&:hover': {
               borderColor: '#8b5cf6',
               background: 'rgba(139, 92, 246, 0.1)',
@@ -167,15 +170,15 @@ function App() {
       MuiCard: {
         styleOverrides: {
           root: {
-            background: 'rgba(20, 20, 25, 0.6)',
+            background: darkMode ? 'rgba(20, 20, 25, 0.6)' : 'rgba(255, 255, 255, 0.8)',
             backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+            border: darkMode ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(0, 0, 0, 0.05)',
+            boxShadow: darkMode ? '0 8px 32px 0 rgba(0, 0, 0, 0.37)' : '0 8px 32px 0 rgba(0, 0, 0, 0.05)',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             '&:hover': {
               transform: 'translateY(-4px)',
-              boxShadow: '0 12px 40px 0 rgba(0, 0, 0, 0.45)',
-              borderColor: 'rgba(255, 255, 255, 0.15)',
+              boxShadow: darkMode ? '0 12px 40px 0 rgba(0, 0, 0, 0.45)' : '0 12px 40px 0 rgba(0, 0, 0, 0.1)',
+              borderColor: darkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)',
             },
           },
         },
@@ -184,27 +187,27 @@ function App() {
         styleOverrides: {
           root: {
             backgroundImage: 'none',
-            background: 'rgba(20, 20, 25, 0.6)',
+            background: darkMode ? 'rgba(20, 20, 25, 0.6)' : 'rgba(255, 255, 255, 0.8)',
             backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            border: darkMode ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(0, 0, 0, 0.05)',
           },
         },
       },
       MuiDrawer: {
         styleOverrides: {
           paper: {
-            background: 'rgba(10, 10, 15, 0.8)',
+            background: darkMode ? 'rgba(10, 10, 15, 0.8)' : 'rgba(255, 255, 255, 0.9)',
             backdropFilter: 'blur(16px)',
-            borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRight: darkMode ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(0, 0, 0, 0.05)',
           },
         },
       },
       MuiAppBar: {
         styleOverrides: {
           root: {
-            background: 'rgba(5, 5, 5, 0.7)',
+            background: darkMode ? 'rgba(5, 5, 5, 0.7)' : 'rgba(255, 255, 255, 0.7)',
             backdropFilter: 'blur(16px)',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            borderBottom: darkMode ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(0, 0, 0, 0.05)',
             boxShadow: 'none',
           },
         },
@@ -213,12 +216,12 @@ function App() {
         styleOverrides: {
           root: {
             '& .MuiOutlinedInput-root': {
-              backgroundColor: 'rgba(255, 255, 255, 0.03)',
+              backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
               '& fieldset': {
-                borderColor: 'rgba(255, 255, 255, 0.1)',
+                borderColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
               },
               '&:hover fieldset': {
-                borderColor: 'rgba(255, 255, 255, 0.2)',
+                borderColor: darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
               },
               '&.Mui-focused fieldset': {
                 borderColor: '#8b5cf6',
@@ -231,7 +234,7 @@ function App() {
         styleOverrides: {
           root: {
             backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            border: darkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.05)',
           },
         },
       },
