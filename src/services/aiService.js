@@ -275,16 +275,17 @@ class AIService {
    */
   buildPrompt(userMessage, context) {
     const contextInfo = this.formatContext(context);
+    const username = context.username || 'User';
 
     return `
-You are Lily's personal AI productivity assistant for her study tracking application. You have access to all her study data and can provide intelligent insights.
+You are ${username}'s personal AI productivity assistant for their study tracking application. You have access to all their study data and can provide intelligent insights.
 
 CONTEXT DATA:
 ${contextInfo}
 
 USER REQUEST: ${userMessage}
 
-Based on Lily's data, please provide a helpful, personalized response. You can:
+Based on ${username}'s data, please provide a helpful, personalized response. You can:
 1. Analyze productivity patterns and trends
 2. Suggest daily/weekly planning strategies
 3. Create roadmaps for subjects or skills
@@ -292,7 +293,7 @@ Based on Lily's data, please provide a helpful, personalized response. You can:
 5. Recommend optimal study schedules
 6. Track goal achievement progress
 
-Please be specific, actionable, and reference her actual data when relevant. Format your response clearly with headings and bullet points when appropriate.
+Please be specific, actionable, and reference their actual data when relevant. Format your response clearly with headings and bullet points when appropriate.
     `.trim();
   }
 
@@ -413,14 +414,16 @@ Please be specific, actionable, and reference her actual data when relevant. For
   /**
    * Analyze productivity patterns
    */
-  async analyzeProductivity(subjects, studySessions, dailyGoals) {
+  async analyzeProductivity(subjects, studySessions, dailyGoals, classSchedule, context = {}) {
     // Use Gemini 2.5 Flash Lite for all other features
     this.setModel('gemini', 'gemini-2.5-flash-lite');
-    const context = {
+    const fullContext = {
       subjects,
       studySessions,
       dailyGoals,
-      currentTime: new Date().toISOString()
+      classSchedule,
+      currentTime: new Date().toISOString(),
+      ...context
     };
 
     const prompt = `Analyze my current productivity patterns and provide insights on:
@@ -430,20 +433,21 @@ Please be specific, actionable, and reference her actual data when relevant. For
 4. Specific recommendations for improvement
 5. What I should prioritize this week`;
 
-    return await this.generateResponse(prompt, context);
+    return await this.generateResponse(prompt, fullContext);
   }
 
   /**
    * Plan daily schedule
    */
-  async planDay(subjects, studySessions, dailyGoals, preferences = {}) {
+  async planDay(subjects, studySessions, dailyGoals, classSchedule, context = {}) {
     this.setModel('gemini', 'gemini-2.5-flash-lite');
-    const context = {
+    const fullContext = {
       subjects,
       studySessions,
       dailyGoals,
+      classSchedule,
       currentTime: new Date().toISOString(),
-      preferences
+      ...context
     };
 
     const prompt = `Create a personalized daily study plan for today based on my current progress and goals. Include:
@@ -453,7 +457,7 @@ Please be specific, actionable, and reference her actual data when relevant. For
 4. Tasks I should focus on for each subject
 5. Adjustment suggestions based on my recent performance`;
 
-    return await this.generateResponse(prompt, context);
+    return await this.generateResponse(prompt, fullContext);
   }
 
   /**
@@ -574,9 +578,12 @@ Format your response with clear numbered headings and bullet points. Start each 
       return { success: false, message: `Connection error for ${providerToTest}: ${errorMessage}`, error };
     }
   }
-  async generateSubjectWithSubtopics(subjectName, description, level, timeframe) {
+  async generateSubjectWithSubtopics(subjectName, description, level, timeframe, context = {}) {
     this.setModel('gemini', 'gemini-2.5-flash-lite');
-    const context = { currentTime: new Date().toISOString() };
+    const fullContext = {
+      currentTime: new Date().toISOString(),
+      ...context
+    };
     const prompt = `
     Analyze the following request and generate a structured learning plan for a subject. The output must be a JSON object with a "subtopics" array.
 
@@ -599,7 +606,7 @@ Format your response with clear numbered headings and bullet points. Start each 
     }
     `;
 
-    const response = await this.generateResponse(prompt, context);
+    const response = await this.generateResponse(prompt, fullContext);
     return response;
   }
 
@@ -647,13 +654,15 @@ Format your response with clear numbered headings and bullet points. Start each 
   }
 
 
-  async getRecommendations(subjects, studySessions, dailyGoals) {
+  async getRecommendations(subjects, studySessions, dailyGoals, classSchedule, context = {}) {
     this.setModel('gemini', 'gemini-2.5-flash-lite');
-    const context = {
+    const fullContext = {
       subjects,
       studySessions,
       dailyGoals,
-      currentTime: new Date().toISOString()
+      classSchedule,
+      currentTime: new Date().toISOString(),
+      ...context
     };
 
     const prompt = `Based on my current study data, provide 3-5 actionable recommendations to improve my learning effectiveness. Focus on:
@@ -664,7 +673,7 @@ Format your response with clear numbered headings and bullet points. Start each 
 
 Format the output as a JSON array of strings. For example: ["Recommendation 1", "Recommendation 2"]`;
 
-    const response = await this.generateResponse(prompt, context);
+    const response = await this.generateResponse(prompt, fullContext);
 
     try {
       // Attempt to parse the response as JSON

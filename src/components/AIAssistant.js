@@ -44,6 +44,7 @@ import ReactMarkdown from 'react-markdown';
 import { useAI } from '../contexts/AIContext';
 import { SubjectsContext } from '../contexts/SubjectsContext';
 import aiService from '../services/aiService';
+import { useAuth } from '../contexts/AuthContext';
 
 const AIAssistant = () => {
   const [isOpen, setIsOpen] = useState(false); // Default to closed
@@ -52,19 +53,22 @@ const AIAssistant = () => {
   const theme = useTheme();
   const { state: aiState, dispatch, sendMessage, analyzeProductivity, generateDailyPlan, generateSubjectWithSubtopics, createSubjectWithTasks, getRecommendations, setCurrentView, clearConversations, clearError, getAvailableModels } = useAI();
   const { subjects, studySessions, checkDailyGoals, addSubject, addTask, addStudySession, classSchedule } = useContext(SubjectsContext);
-  
+  const { user } = useAuth();
+
+  const username = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+
   const [message, setMessage] = useState('');
   const [subjectDialog, setSubjectDialog] = useState(false);
-  
+
   const [subjectData, setSubjectData] = useState({
     name: '',
     description: '',
     level: '',
     timeframe: ''
   });
-  
+
   const messagesEndRef = useRef(null);
-  
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -77,16 +81,17 @@ const AIAssistant = () => {
 
   const handleSendMessage = async () => {
     if (!message.trim()) return;
-    
+
     const appData = {
       subjects,
       studySessions,
       dailyGoals: checkDailyGoals(),
       currentTime: new Date().toISOString(),
       weeklyStats: getWeeklyStats(),
-      classSchedule
+      classSchedule,
+      username
     };
-    
+
     await sendMessage(message, appData);
     setMessage('');
   };
@@ -101,32 +106,40 @@ const AIAssistant = () => {
   const getWeeklyStats = () => {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-    
-    const weeklySessionsInfo = studySessions.filter(session => 
+
+    const weeklySessionsInfo = studySessions.filter(session =>
       new Date(session.date) >= oneWeekAgo
     );
-    
+
     return {
       totalHours: weeklySessionsInfo.reduce((total, session) => total + (session.duration / 60), 0),
       totalSessions: weeklySessionsInfo.length,
-      activeDays: new Set(weeklySessionsInfo.map(session => 
+      activeDays: new Set(weeklySessionsInfo.map(session =>
         new Date(session.date).toDateString()
       )).size
     };
   };
 
   const handleQuickAction = async (action) => {
+    const context = {
+      subjects,
+      studySessions,
+      dailyGoals: checkDailyGoals(),
+      classSchedule,
+      username
+    };
+
     switch (action) {
       case 'analyze':
-        await analyzeProductivity(subjects, studySessions, checkDailyGoals(), classSchedule);
+        await analyzeProductivity(subjects, studySessions, checkDailyGoals(), classSchedule, context);
         setCurrentView('insights');
         break;
       case 'plan':
-        await generateDailyPlan(subjects, studySessions, checkDailyGoals(), classSchedule);
+        await generateDailyPlan(subjects, studySessions, checkDailyGoals(), classSchedule, context);
         setCurrentView('planning');
         break;
       case 'recommendations':
-        await getRecommendations(subjects, studySessions, checkDailyGoals(), classSchedule);
+        await getRecommendations(subjects, studySessions, checkDailyGoals(), classSchedule, context);
         break;
       case 'subject':
         setSubjectDialog(true);
@@ -140,13 +153,13 @@ const AIAssistant = () => {
     if (!subjectData.name || !subjectData.description || !subjectData.level || !subjectData.timeframe) {
       return;
     }
-    
+
     await generateSubjectWithSubtopics(
-      subjectData.name, 
-      subjectData.description, 
-      subjectData.level, 
-      subjectData.timeframe, 
-      { subjects, studySessions, checkDailyGoals }
+      subjectData.name,
+      subjectData.description,
+      subjectData.level,
+      subjectData.timeframe,
+      { subjects, studySessions, checkDailyGoals, username }
     );
     setSubjectDialog(false);
     setSubjectData({ name: '', description: '', level: '', timeframe: '' });
@@ -156,12 +169,12 @@ const AIAssistant = () => {
   const handleCreateSubjectInApp = async (subjectName, subjectStructure) => {
     // Create the subject with tasks in the app
     const result = await createSubjectWithTasks(subjectName, subjectStructure, { addSubject });
-    
+
     // Show success or error message
     const resultMessage = {
       id: Date.now(),
       type: 'assistant',
-      content: result.success 
+      content: result.success
         ? `✅ ${result.message} You can now view and manage it in your subject list with the subtopics as tasks.`
         : `❌ ${result.message}`,
       timestamp: new Date().toISOString()
@@ -189,8 +202,8 @@ const AIAssistant = () => {
                 <Typography color="text.secondary">
                   Click "Analyze Productivity" to get insights about your study patterns
                 </Typography>
-                <Button 
-                  variant="contained" 
+                <Button
+                  variant="contained"
                   startIcon={<AnalyticsIcon />}
                   onClick={() => handleQuickAction('analyze')}
                   sx={{ mt: 2 }}
@@ -241,8 +254,8 @@ const AIAssistant = () => {
                 <Typography color="text.secondary">
                   Generate a personalized daily study plan based on your goals and progress
                 </Typography>
-                <Button 
-                  variant="contained" 
+                <Button
+                  variant="contained"
                   startIcon={<PlanningIcon />}
                   onClick={() => handleQuickAction('plan')}
                   sx={{ mt: 2 }}
@@ -303,7 +316,7 @@ const AIAssistant = () => {
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                   <AIIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
                   <Typography variant="h6" gutterBottom>
-                    Hi Lily! I'm your AI study assistant 🤖
+                    Hi {username}! I'm your AI study assistant 🤖
                   </Typography>
                   <Typography color="text.secondary" sx={{ mb: 3 }}>
                     I can help you analyze your productivity, plan your day, and generate subjects with subtopics!
@@ -341,10 +354,10 @@ const AIAssistant = () => {
                       <Paper
                         sx={{
                           p: 2,
-                          backgroundColor: conversation.type === 'user' 
-                            ? theme.palette.primary.main 
-                            : theme.palette.mode === 'dark' 
-                              ? 'rgba(255, 255, 255, 0.05)' 
+                          backgroundColor: conversation.type === 'user'
+                            ? theme.palette.primary.main
+                            : theme.palette.mode === 'dark'
+                              ? 'rgba(255, 255, 255, 0.05)'
                               : 'rgba(0, 0, 0, 0.02)',
                           color: conversation.type === 'user' ? '#fff' : 'text.primary',
                           borderRadius: 2,
@@ -356,8 +369,8 @@ const AIAssistant = () => {
                             <ReactMarkdown>{conversation.content}</ReactMarkdown>
                             {conversation.isSubjectStructure && (
                               <Box sx={{ mt: 2 }}>
-                                <Button 
-                                  variant="contained" 
+                                <Button
+                                  variant="contained"
                                   size="small"
                                   onClick={() => handleCreateSubjectInApp(conversation.subjectName, conversation.subjectStructure)}
                                 >
@@ -504,8 +517,8 @@ const AIAssistant = () => {
               }}
             >
               {/* Header */}
-              <Box sx={{ 
-                p: 2, 
+              <Box sx={{
+                p: 2,
                 borderBottom: `1px solid ${theme.palette.divider}`,
                 display: 'flex',
                 alignItems: 'center',
@@ -569,21 +582,21 @@ const AIAssistant = () => {
                 variant="fullWidth"
                 sx={{ borderBottom: `1px solid ${theme.palette.divider}` }}
               >
-                <Tab 
-                  icon={<AIIcon />} 
-                  label="Chat" 
+                <Tab
+                  icon={<AIIcon />}
+                  label="Chat"
                   value="chat"
                   iconPosition="start"
                 />
-                <Tab 
-                  icon={<TrendIcon />} 
-                  label="Insights" 
+                <Tab
+                  icon={<TrendIcon />}
+                  label="Insights"
                   value="insights"
                   iconPosition="start"
                 />
-                <Tab 
-                  icon={<PlanningIcon />} 
-                  label="Planning" 
+                <Tab
+                  icon={<PlanningIcon />}
+                  label="Planning"
                   value="planning"
                   iconPosition="start"
                 />
@@ -645,7 +658,7 @@ const AIAssistant = () => {
                 </DialogContent>
                 <DialogActions>
                   <Button onClick={() => setSubjectDialog(false)}>Cancel</Button>
-                  <Button 
+                  <Button
                     onClick={handleSubjectGeneration}
                     variant="contained"
                     disabled={!subjectData.name || !subjectData.description || !subjectData.level || !subjectData.timeframe || aiState.isLoading}

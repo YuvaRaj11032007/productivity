@@ -36,16 +36,16 @@ import { useTimer } from '../contexts/TimerContext';
 
 const ModernTimer = ({ subjectId, onSessionComplete }) => {
   const theme = useTheme();
-  const { 
-    activeTimer, 
-    startTimer: contextStartTimer, 
-    pauseTimer: contextPauseTimer, 
-    resetTimer: contextResetTimer, 
+  const {
+    activeTimer,
+    startTimer: contextStartTimer,
+    pauseTimer: contextPauseTimer,
+    resetTimer: contextResetTimer,
     stopTimer: contextStopTimer,
     getElapsedTime,
-    isTimerRunning 
+    isTimerRunning
   } = useTimer();
-  
+
   // Timer modes
   const TIMER_MODES = {
     FOCUS: 'focus',
@@ -87,7 +87,12 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
   // Get current timer state
   const isRunning = isTimerRunning(subjectId);
   const time = getElapsedTime(subjectId);
-  
+
+  // Calculate display time
+  const isCountdown = mode !== TIMER_MODES.FOCUS;
+  const targetDuration = settings[mode];
+  const displayTime = isCountdown ? Math.max(0, targetDuration - time) : time;
+
   // Initialize audio
   useEffect(() => {
     try {
@@ -130,7 +135,7 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     const s = seconds % 60;
-    
+
     if (h > 0) {
       return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     }
@@ -169,7 +174,7 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
       message
     });
     setTimeout(() => setNotification(prev => ({ ...prev, open: false })), 5000); // Hide after 5 seconds
-    
+
     // Browser notification if supported and permitted
     if (settings.notifications && 'Notification' in window && Notification.permission === 'granted') {
       try {
@@ -184,7 +189,7 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
   const handleTimerComplete = useCallback(() => {
     contextStopTimer();
     contextResetTimer();
-    
+
     // Play notification sound if enabled
     if (settings.notifications && audioRef.current) {
       try {
@@ -200,10 +205,10 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
       // Increment completed pomodoros
       const newCompletedPomodoros = completedPomodoros + 1;
       setCompletedPomodoros(newCompletedPomodoros);
-      
+
       // Show notification
       showTimerNotification('Pomodoro completed! Time for a break.');
-      
+
       // Check if it's time for a long break
       if (newCompletedPomodoros % settings.longBreakInterval === 0) {
         setMode(TIMER_MODES.LONG_BREAK);
@@ -212,7 +217,7 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
         setMode(TIMER_MODES.SHORT_BREAK);
         if (settings.autoStartBreaks) startTimer();
       }
-      
+
       // Log the completed pomodoro session
       onSessionComplete({
         name: sessionName || `Pomodoro Session ${new Date().toLocaleTimeString()}`,
@@ -230,10 +235,11 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
   }, [contextStopTimer, contextResetTimer, settings, mode, completedPomodoros, onSessionComplete, sessionName, notes, showTimerNotification, startTimer, resetTimer, TIMER_MODES.LONG_BREAK, TIMER_MODES.POMODORO, TIMER_MODES.SHORT_BREAK]);
 
   useEffect(() => {
-    if (isRunning && mode !== TIMER_MODES.FOCUS && time <= 0) {
+    // Check if timer reached target duration (for countdown modes)
+    if (isRunning && mode !== TIMER_MODES.FOCUS && time >= settings[mode]) {
       handleTimerComplete();
     }
-  }, [time, isRunning, mode, handleTimerComplete, TIMER_MODES.FOCUS]);
+  }, [time, isRunning, mode, settings, handleTimerComplete, TIMER_MODES.FOCUS]);
 
   // Request notification permission
   const requestNotificationPermission = useCallback(async () => {
@@ -320,18 +326,9 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
   const completeSession = () => {
     pauseTimer();
 
-    let durationInHours = 0;
-    if (mode === TIMER_MODES.FOCUS) {
-      // For focus mode, use elapsed time
-      durationInHours = time / 3600;
-    } else if (mode === TIMER_MODES.CUSTOM) {
-      // For custom mode, use the difference between set time and remaining time
-      const elapsedSeconds = settings[mode] ? settings[mode] - time : 0;
-      durationInHours = elapsedSeconds / 3600;
-    } else if (mode === TIMER_MODES.POMODORO) {
-      // For pomodoro, use the full pomodoro duration
-      durationInHours = settings[mode] ? settings[mode] / 3600 : 0;
-    }
+    // Duration is always elapsed time in hours
+    let durationInHours = time / 3600;
+
     // Ensure durationInHours is a valid number
     if (isNaN(durationInHours) || durationInHours === undefined) durationInHours = 0;
     onSessionComplete({
@@ -348,7 +345,7 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
 
   // Convert minutes to seconds for settings
   const minutesToSeconds = (minutes) => minutes * 60;
-  
+
   // Convert seconds to minutes for settings display
   const secondsToMinutes = (seconds) => seconds / 60;
 
@@ -367,7 +364,7 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
     borderRadius: '24px',
     backgroundColor: theme.palette.mode === 'dark' ? 'rgba(30, 30, 40, 0.8)' : 'rgba(255, 255, 255, 0.9)',
     backdropFilter: 'blur(10px)',
-    boxShadow: theme.palette.mode === 'dark' 
+    boxShadow: theme.palette.mode === 'dark'
       ? '0 10px 30px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.1)'
       : '0 10px 30px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(0, 0, 0, 0.05)',
     maxWidth: '500px',
@@ -378,38 +375,38 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
   return (
     <Paper elevation={0} sx={containerStyles}>
       {/* Timer Header */}
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
           mb: 2
         }}
       >
-        <Typography 
-          variant="subtitle1" 
-          component="h2" 
-          sx={{ 
-            fontWeight: 500, 
+        <Typography
+          variant="subtitle1"
+          component="h2"
+          sx={{
+            fontWeight: 500,
             color: 'text.secondary',
             fontSize: '0.9rem'
           }}
         >
           {getModeLabel()}
         </Typography>
-        
-        <IconButton 
+
+        <IconButton
           onClick={() => setOpenSettings(true)}
           size="small"
-          sx={{ 
+          sx={{
             color: 'text.secondary',
-            '&:hover': { color: 'primary.main' } 
+            '&:hover': { color: 'primary.main' }
           }}
         >
           <SettingsIcon fontSize="small" />
         </IconButton>
       </Box>
-      
+
       {/* Timer Tabs */}
       <Box
         sx={{
@@ -418,13 +415,13 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
           mb: 3
         }}
       >
-        <Tabs 
-          value={mode} 
-          onChange={handleModeChange} 
+        <Tabs
+          value={mode}
+          onChange={handleModeChange}
           variant="scrollable"
           scrollButtons="auto"
           allowScrollButtonsMobile
-          sx={{ 
+          sx={{
             '& .MuiTabs-flexContainer': {
               justifyContent: 'center',
               gap: { xs: 0.5, sm: 1 }
@@ -446,48 +443,48 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
               fontWeight: 500
             }
           }}
-          TabIndicatorProps={{ 
-            style: { 
+          TabIndicatorProps={{
+            style: {
               display: 'none'
-            } 
+            }
           }}
         >
-          <Tab 
-            label="Focus" 
-            value={TIMER_MODES.FOCUS} 
+          <Tab
+            label="Focus"
+            value={TIMER_MODES.FOCUS}
             sx={{ color: mode === TIMER_MODES.FOCUS ? 'white' : 'text.secondary' }}
           />
-          <Tab 
-            label="Pomodoro" 
-            value={TIMER_MODES.POMODORO} 
+          <Tab
+            label="Pomodoro"
+            value={TIMER_MODES.POMODORO}
             sx={{ color: mode === TIMER_MODES.POMODORO ? 'white' : 'text.secondary' }}
           />
-          <Tab 
-            label="Short Break" 
-            value={TIMER_MODES.SHORT_BREAK} 
+          <Tab
+            label="Short Break"
+            value={TIMER_MODES.SHORT_BREAK}
             sx={{ color: mode === TIMER_MODES.SHORT_BREAK ? 'white' : 'text.secondary' }}
           />
-          <Tab 
-            label="Long Break" 
-            value={TIMER_MODES.LONG_BREAK} 
+          <Tab
+            label="Long Break"
+            value={TIMER_MODES.LONG_BREAK}
             sx={{ color: mode === TIMER_MODES.LONG_BREAK ? 'white' : 'text.secondary' }}
           />
-          <Tab 
-            label="Custom" 
-            value={TIMER_MODES.CUSTOM} 
+          <Tab
+            label="Custom"
+            value={TIMER_MODES.CUSTOM}
             sx={{ color: mode === TIMER_MODES.CUSTOM ? 'white' : 'text.secondary' }}
           />
         </Tabs>
       </Box>
 
       {/* Timer Display */}
-      <Box 
-        sx={{ 
-          display: 'flex', 
+      <Box
+        sx={{
+          display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center', 
-          position: 'relative', 
+          justifyContent: 'center',
+          position: 'relative',
           my: 4,
           transition: 'transform 0.3s ease',
         }}
@@ -504,30 +501,30 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
             borderRadius: '50%',
           }}
         >
-          <CircularProgress 
-            variant="determinate" 
-            value={calculateProgress()} 
-            size={280} 
-            thickness={3} 
-            sx={{ 
+          <CircularProgress
+            variant="determinate"
+            value={calculateProgress()}
+            size={280}
+            thickness={3}
+            sx={{
               color: getModeColor(),
               position: 'absolute',
               zIndex: 1,
               transition: 'all 0.5s ease',
               borderRadius: '50%',
               opacity: 0.9
-            }} 
+            }}
           />
-          <CircularProgress 
-            variant="determinate" 
-            value={100} 
-            size={280} 
-            thickness={3} 
-            sx={{ 
+          <CircularProgress
+            variant="determinate"
+            value={100}
+            size={280}
+            thickness={3}
+            sx={{
               color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
               position: 'absolute',
               zIndex: 0
-            }} 
+            }}
           />
           <Box
             sx={{
@@ -542,12 +539,12 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
               transition: 'all 0.3s ease'
             }}
           >
-            <Typography 
-              variant="h1" 
-              component="div" 
+            <Typography
+              variant="h1"
+              component="div"
               color="text.primary"
-              sx={{ 
-                fontWeight: 300, 
+              sx={{
+                fontWeight: 300,
                 fontSize: { xs: '3rem', sm: '4rem' },
                 fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
                 letterSpacing: '0.02em',
@@ -555,7 +552,7 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
                 lineHeight: 1
               }}
             >
-              {formatTime(time)}
+              {formatTime(displayTime)}
             </Typography>
           </Box>
         </Box>
@@ -563,43 +560,43 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
         {/* Pomodoro Counter */}
         {mode === TIMER_MODES.POMODORO && completedPomodoros > 0 && (
           <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-            <Chip 
-              label={`${completedPomodoros} ${completedPomodoros === 1 ? 'Pomodoro' : 'Pomodoros'} Completed`} 
-              color="primary" 
+            <Chip
+              label={`${completedPomodoros} ${completedPomodoros === 1 ? 'Pomodoro' : 'Pomodoros'} Completed`}
+              color="primary"
               variant="outlined"
               size="small"
-              sx={{ 
-                borderRadius: '16px', 
-                py: 0.5, 
+              sx={{
+                borderRadius: '16px',
+                py: 0.5,
                 px: 1,
                 fontWeight: 400,
                 fontSize: '0.75rem',
                 borderWidth: '1px',
                 backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
-              }} 
+              }}
               onClick={undefined}
             />
           </Box>
         )}
 
         {/* Timer Controls */}
-        <Box 
-          sx={{ 
-            display: 'flex', 
+        <Box
+          sx={{
+            display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'center', 
+            justifyContent: 'center',
             alignItems: 'center',
-            gap: 2, 
+            gap: 2,
             mb: 3,
             width: '100%' // Ensure full width
           }}
         >
           {!isRunning ? (
-            <Button 
-              variant="contained" 
+            <Button
+              variant="contained"
               onClick={startTimer}
-              sx={{ 
-                borderRadius: '50%', 
+              sx={{
+                borderRadius: '50%',
                 width: '80px',
                 height: '80px',
                 minWidth: 'unset',
@@ -619,11 +616,11 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
               START
             </Button>
           ) : (
-            <Button 
-              variant="contained" 
+            <Button
+              variant="contained"
               onClick={pauseTimer}
-              sx={{ 
-                borderRadius: '50%', 
+              sx={{
+                borderRadius: '50%',
                 width: '80px',
                 height: '80px',
                 minWidth: 'unset',
@@ -643,11 +640,11 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
             </Button>
           )}
 
-          <Button 
-            variant="text" 
+          <Button
+            variant="text"
             onClick={resetTimer}
             size="small"
-            sx={{ 
+            sx={{
               mt: 1,
               color: 'text.secondary',
               fontSize: '0.75rem',
@@ -662,16 +659,16 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
             Reset
           </Button>
 
-          <Button 
-            variant="contained" 
-            color="success" 
-            startIcon={<CheckCircle />} 
+          <Button
+            variant="contained"
+            color="success"
+            startIcon={<CheckCircle />}
             onClick={completeSession}
             disabled={mode === TIMER_MODES.FOCUS ? time < 60 : time === settings[mode]} // Require at least 1 minute for focus mode
             size="large"
-            sx={{ 
-              borderRadius: '30px', 
-              py: 1, 
+            sx={{
+              borderRadius: '30px',
+              py: 1,
               px: 3,
               fontSize: '0.9rem',
               fontWeight: 500,
@@ -691,9 +688,9 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
         </Box>
 
         {/* Session Details */}
-        <Box 
-          sx={{ 
-            mt: 3, 
+        <Box
+          sx={{
+            mt: 3,
             mb: 2,
             px: { xs: 0, sm: 2 },
             py: 3,
@@ -702,12 +699,12 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
             width: '100%'
           }}
         >
-          <Typography 
-            variant="h6" 
-            gutterBottom 
-            sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
+          <Typography
+            variant="h6"
+            gutterBottom
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
               gap: 1.5,
               px: 3,
               mb: 3,
@@ -718,7 +715,7 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
           >
             <AssignmentIcon color="primary" fontSize="small" /> Session Details
           </Typography>
-          
+
           <Box sx={{ px: 3 }}>
             <TextField
               label="Session Name"
@@ -729,7 +726,7 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
               margin="normal"
               placeholder="e.g., Math Homework"
               InputProps={{
-                sx: { 
+                sx: {
                   borderRadius: 2,
                   '&.Mui-focused': {
                     boxShadow: '0 0 0 3px rgba(25, 118, 210, 0.1)'
@@ -738,7 +735,7 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
               }}
               sx={{ mb: 3 }}
             />
-            
+
             <TextField
               label="Notes"
               variant="outlined"
@@ -750,7 +747,7 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
               margin="normal"
               placeholder="What are you working on?"
               InputProps={{
-                sx: { 
+                sx: {
                   borderRadius: 2,
                   '&.Mui-focused': {
                     boxShadow: '0 0 0 3px rgba(25, 118, 210, 0.1)'
@@ -763,10 +760,10 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
       </Box>
 
       {/* Settings Dialog */}
-      <Dialog 
-        open={openSettings} 
-        onClose={() => setOpenSettings(false)} 
-        maxWidth="sm" 
+      <Dialog
+        open={openSettings}
+        onClose={() => setOpenSettings(false)}
+        maxWidth="sm"
         fullWidth
         PaperProps={{
           sx: {
@@ -778,9 +775,9 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
           }
         }}
       >
-        <DialogTitle 
-          sx={{ 
-            bgcolor: getModeColor(), 
+        <DialogTitle
+          sx={{
+            bgcolor: getModeColor(),
             color: 'white',
             py: 2.5,
             px: 3,
@@ -794,11 +791,11 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
           <SettingsIcon /> Timer Settings
         </DialogTitle>
         <DialogContent sx={{ p: 3, mt: 2 }}>
-          <Typography 
-            variant="subtitle1" 
-            gutterBottom 
-            sx={{ 
-              fontWeight: 500, 
+          <Typography
+            variant="subtitle1"
+            gutterBottom
+            sx={{
+              fontWeight: 500,
               color: 'text.primary',
               display: 'flex',
               alignItems: 'center',
@@ -808,13 +805,13 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
           >
             <TimerIcon fontSize="small" /> Timer Durations (minutes)
           </Typography>
-          
+
           <Box sx={{ mb: 4, px: 1 }}>
-            <Typography 
-              id="pomodoro-slider" 
+            <Typography
+              id="pomodoro-slider"
               gutterBottom
-              sx={{ 
-                display: 'flex', 
+              sx={{
+                display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 color: 'text.secondary',
@@ -822,9 +819,9 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
               }}
             >
               <span>Pomodoro</span>
-              <Chip 
-                label={`${secondsToMinutes(settings[TIMER_MODES.POMODORO])} min`} 
-                size="small" 
+              <Chip
+                label={`${secondsToMinutes(settings[TIMER_MODES.POMODORO])} min`}
+                size="small"
                 color="primary"
                 sx={{ fontWeight: 500, bgcolor: '#f44336', color: 'white' }}
                 onClick={undefined}
@@ -837,7 +834,7 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
               min={1}
               max={60}
               valueLabelDisplay="auto"
-              sx={{ 
+              sx={{
                 color: '#f44336',
                 '& .MuiSlider-thumb': {
                   width: 16,
@@ -851,12 +848,12 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
                 }
               }}
             />
-            
-            <Typography 
-              id="short-break-slider" 
+
+            <Typography
+              id="short-break-slider"
               gutterBottom
-              sx={{ 
-                display: 'flex', 
+              sx={{
+                display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 color: 'text.secondary',
@@ -865,9 +862,9 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
               }}
             >
               <span>Short Break</span>
-              <Chip 
-                label={`${secondsToMinutes(settings[TIMER_MODES.SHORT_BREAK])} min`} 
-                size="small" 
+              <Chip
+                label={`${secondsToMinutes(settings[TIMER_MODES.SHORT_BREAK])} min`}
+                size="small"
                 color="primary"
                 sx={{ fontWeight: 500, bgcolor: '#4caf50', color: 'white' }}
               />
@@ -879,7 +876,7 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
               min={1}
               max={15}
               valueLabelDisplay="auto"
-              sx={{ 
+              sx={{
                 color: '#4caf50',
                 '& .MuiSlider-thumb': {
                   width: 16,
@@ -893,12 +890,12 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
                 }
               }}
             />
-            
-            <Typography 
-              id="long-break-slider" 
+
+            <Typography
+              id="long-break-slider"
               gutterBottom
-              sx={{ 
-                display: 'flex', 
+              sx={{
+                display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 color: 'text.secondary',
@@ -907,9 +904,9 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
               }}
             >
               <span>Long Break</span>
-              <Chip 
-                label={`${secondsToMinutes(settings[TIMER_MODES.LONG_BREAK])} min`} 
-                size="small" 
+              <Chip
+                label={`${secondsToMinutes(settings[TIMER_MODES.LONG_BREAK])} min`}
+                size="small"
                 color="primary"
                 sx={{ fontWeight: 500, bgcolor: '#2196f3', color: 'white' }}
                 onClick={undefined}
@@ -922,7 +919,7 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
               min={5}
               max={30}
               valueLabelDisplay="auto"
-              sx={{ 
+              sx={{
                 color: '#2196f3',
                 '& .MuiSlider-thumb': {
                   width: 16,
@@ -936,12 +933,12 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
                 }
               }}
             />
-            
-            <Typography 
-              id="custom-timer-slider" 
+
+            <Typography
+              id="custom-timer-slider"
               gutterBottom
-              sx={{ 
-                display: 'flex', 
+              sx={{
+                display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 color: 'text.secondary',
@@ -950,9 +947,9 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
               }}
             >
               <span>Custom Timer</span>
-              <Chip 
-                label={`${secondsToMinutes(settings[TIMER_MODES.CUSTOM])} min`} 
-                size="small" 
+              <Chip
+                label={`${secondsToMinutes(settings[TIMER_MODES.CUSTOM])} min`}
+                size="small"
                 color="primary"
                 sx={{ fontWeight: 500, bgcolor: '#ff9800', color: 'white' }}
                 onClick={undefined}
@@ -965,7 +962,7 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
               min={1}
               max={120}
               valueLabelDisplay="auto"
-              sx={{ 
+              sx={{
                 color: '#ff9800',
                 '& .MuiSlider-thumb': {
                   width: 16,
@@ -980,14 +977,14 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
               }}
             />
           </Box>
-          
+
           <Divider sx={{ my: 3 }} />
-          
-          <Typography 
-            variant="subtitle1" 
-            gutterBottom 
-            sx={{ 
-              fontWeight: 500, 
+
+          <Typography
+            variant="subtitle1"
+            gutterBottom
+            sx={{
+              fontWeight: 500,
               color: 'text.primary',
               display: 'flex',
               alignItems: 'center',
@@ -997,13 +994,13 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
           >
             <AlarmIcon fontSize="small" /> Pomodoro Settings
           </Typography>
-          
+
           <Box sx={{ mb: 4, px: 1 }}>
-            <Typography 
-              id="long-break-interval-slider" 
+            <Typography
+              id="long-break-interval-slider"
               gutterBottom
-              sx={{ 
-                display: 'flex', 
+              sx={{
+                display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 color: 'text.secondary',
@@ -1011,9 +1008,9 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
               }}
             >
               <span>Long Break After</span>
-              <Chip 
-                label={`${settings.longBreakInterval} Pomodoros`} 
-                size="small" 
+              <Chip
+                label={`${settings.longBreakInterval} Pomodoros`}
+                size="small"
                 color="primary"
                 sx={{ fontWeight: 500 }}
                 onClick={undefined}
@@ -1028,7 +1025,7 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
               step={1}
               marks
               valueLabelDisplay="auto"
-              sx={{ 
+              sx={{
                 '& .MuiSlider-thumb': {
                   width: 16,
                   height: 16,
@@ -1036,14 +1033,14 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
               }}
             />
           </Box>
-          
+
           <Divider sx={{ my: 3 }} />
-          
-          <Typography 
-            variant="subtitle1" 
-            gutterBottom 
-            sx={{ 
-              fontWeight: 500, 
+
+          <Typography
+            variant="subtitle1"
+            gutterBottom
+            sx={{
+              fontWeight: 500,
               color: 'text.primary',
               display: 'flex',
               alignItems: 'center',
@@ -1053,38 +1050,38 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
           >
             <AutorenewIcon fontSize="small" /> Auto Start Options
           </Typography>
-          
+
           <FormGroup sx={{ px: 1 }}>
-            <FormControlLabel 
+            <FormControlLabel
               control={
-                <Switch 
-                  checked={settings.autoStartBreaks} 
-                  onChange={(e) => handleSettingsChange('autoStartBreaks', e.target.checked)} 
+                <Switch
+                  checked={settings.autoStartBreaks}
+                  onChange={(e) => handleSettingsChange('autoStartBreaks', e.target.checked)}
                   color="primary"
                 />
-              } 
-              label="Auto-start Breaks" 
+              }
+              label="Auto-start Breaks"
               sx={{ mb: 1 }}
             />
-            <FormControlLabel 
+            <FormControlLabel
               control={
-                <Switch 
-                  checked={settings.autoStartPomodoros} 
-                  onChange={(e) => handleSettingsChange('autoStartPomodoros', e.target.checked)} 
+                <Switch
+                  checked={settings.autoStartPomodoros}
+                  onChange={(e) => handleSettingsChange('autoStartPomodoros', e.target.checked)}
                   color="primary"
                 />
-              } 
-              label="Auto-start Pomodoros" 
+              }
+              label="Auto-start Pomodoros"
             />
           </FormGroup>
-          
+
           <Divider sx={{ my: 3 }} />
-          
-          <Typography 
-            variant="subtitle1" 
-            gutterBottom 
-            sx={{ 
-              fontWeight: 500, 
+
+          <Typography
+            variant="subtitle1"
+            gutterBottom
+            sx={{
+              fontWeight: 500,
               color: 'text.primary',
               display: 'flex',
               alignItems: 'center',
@@ -1094,25 +1091,25 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
           >
             <NotificationsIcon fontSize="small" /> Notification Settings
           </Typography>
-          
+
           <Box sx={{ px: 1 }}>
-            <FormControlLabel 
+            <FormControlLabel
               control={
-                <Switch 
-                  checked={settings.notifications} 
-                  onChange={(e) => handleSettingsChange('notifications', e.target.checked)} 
+                <Switch
+                  checked={settings.notifications}
+                  onChange={(e) => handleSettingsChange('notifications', e.target.checked)}
                   color="primary"
                 />
-              } 
-              label="Enable Notifications" 
+              }
+              label="Enable Notifications"
             />
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2, bgcolor: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0.02)' }}>
-          <Button 
+          <Button
             onClick={() => setOpenSettings(false)}
             variant="contained"
-            sx={{ 
+            sx={{
               borderRadius: '20px',
               px: 3,
               py: 1,
@@ -1132,10 +1129,10 @@ const ModernTimer = ({ subjectId, onSessionComplete }) => {
         onClose={() => setNotification(prev => ({ ...prev, open: false }))}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert 
-          severity={notification.severity} 
+        <Alert
+          severity={notification.severity}
           variant="filled"
-          sx={{ 
+          sx={{
             width: '100%',
             borderRadius: '12px',
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',

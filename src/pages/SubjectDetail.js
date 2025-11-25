@@ -5,7 +5,7 @@ import {
   ListItemText, IconButton, Button,
   TextField, Dialog, DialogTitle, DialogContent, DialogActions,
   Grid, Card, CardContent, LinearProgress, Tabs, Tab, CircularProgress,
-  Chip, Stack
+  Chip, Stack, Checkbox, FormControlLabel, ListItemSecondaryAction
 } from '@mui/material';
 
 import AddIcon from '@mui/icons-material/Add';
@@ -54,10 +54,12 @@ const SubjectDetail = () => {
     notes: ''
   });
   const [subjectNotes, setSubjectNotes] = useState('');
-  const [newAttachment, setNewAttachment] = useState(null);
-  const [newAttachmentData, setNewAttachmentData] = useState(null);
+  const [newAttachments, setNewAttachments] = useState([]);
   const [tabValue, setTabValue] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [openTopicReviewDialog, setOpenTopicReviewDialog] = useState(false);
+  const [generatedTopics, setGeneratedTopics] = useState([]);
+  const [selectedTopics, setSelectedTopics] = useState([]);
 
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const [selectedPdf, setSelectedPdf] = useState(null);
@@ -113,10 +115,9 @@ const SubjectDetail = () => {
       const aiTasks = aiService.parseTaskListResponse(responseText || '');
 
       if (aiTasks.length > 0) {
-        const newTasks = await addMultipleTasks(subjectId, aiTasks);
-        if (newTasks) {
-          fetchData();
-        }
+        setGeneratedTopics(aiTasks);
+        setSelectedTopics(aiTasks.map((_, index) => index)); // Select all by default
+        setOpenTopicReviewDialog(true);
       } else {
         // Fallback tasks
         const fallbackTasks = [
@@ -125,10 +126,9 @@ const SubjectDetail = () => {
           { name: 'Core Theory', description: 'Core Theory', estimatedMinutes: 180, dueDate: null },
           { name: 'Practice Problems', description: 'Practice Problems', estimatedMinutes: 90, dueDate: null },
         ];
-        const newTasks = await addMultipleTasks(subjectId, fallbackTasks);
-        if (newTasks) {
-          fetchData();
-        }
+        setGeneratedTopics(fallbackTasks);
+        setSelectedTopics(fallbackTasks.map((_, index) => index));
+        setOpenTopicReviewDialog(true);
       }
 
     } catch (e) {
@@ -136,7 +136,28 @@ const SubjectDetail = () => {
     } finally {
       setIsGenerating(false);
     }
-  }, [subject, addMultipleTasks, subjectId, studySessions, subjects, fetchData, subjectNotes]);
+  }, [subject, subjectId, studySessions, subjects, subjectNotes]);
+
+  const handleConfirmAddTopics = async () => {
+    const topicsToAdd = generatedTopics.filter((_, index) => selectedTopics.includes(index));
+    if (topicsToAdd.length > 0) {
+      await addMultipleTasks(subjectId, topicsToAdd);
+      fetchData();
+    }
+    setOpenTopicReviewDialog(false);
+    setGeneratedTopics([]);
+    setSelectedTopics([]);
+  };
+
+  const handleToggleTopicSelection = (index) => {
+    const newSelected = [...selectedTopics];
+    if (newSelected.includes(index)) {
+      newSelected.splice(newSelected.indexOf(index), 1);
+    } else {
+      newSelected.push(index);
+    }
+    setSelectedTopics(newSelected);
+  };
 
   const handleOpenSessionDialog = () => {
     setOpenSessionDialog(true);
@@ -187,28 +208,24 @@ const SubjectDetail = () => {
   };
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setNewAttachment(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setNewAttachmentData(reader.result);
-      };
-      reader.readAsDataURL(file);
+    if (e.target.files && e.target.files.length > 0) {
+      setNewAttachments(prev => [...prev, ...Array.from(e.target.files)]);
     }
   };
 
-  const handleSaveNotes = () => {
+  const handleRemoveNewAttachment = (index) => {
+    setNewAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSaveNotes = async () => {
     updateSubject(subjectId, { notes: subjectNotes });
-    if (newAttachment && newAttachmentData) {
-      const attachment = {
-        name: newAttachment.name,
-        path: newAttachmentData
-      }
-      addAttachment(subjectId, attachment);
-      setNewAttachment(null);
-      setNewAttachmentData(null);
+
+    // Upload all new attachments
+    for (const file of newAttachments) {
+      await addAttachment(subjectId, {}, file);
     }
+
+    setNewAttachments([]);
     handleCloseNotesDialog();
   };
 
@@ -220,13 +237,7 @@ const SubjectDetail = () => {
     e.preventDefault();
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
-      const file = files[0]; // Handle first file for now, or loop for multiple
-      setNewAttachment(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setNewAttachmentData(reader.result);
-      };
-      reader.readAsDataURL(file);
+      setNewAttachments(prev => [...prev, ...Array.from(files)]);
     }
   };
 
@@ -620,29 +631,44 @@ const SubjectDetail = () => {
               component="label"
               startIcon={<AddIcon />}
             >
-              Add Attachment
+              Add Attachments
               <input
                 type="file"
+                multiple
                 hidden
                 onChange={handleFileChange}
               />
             </Button>
-            {newAttachment && (
-              <Typography variant="body2" sx={{ mt: 1, color: 'primary.main' }}>
-                Selected: {newAttachment.name}
-              </Typography>
+
+            {newAttachments.length > 0 && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="caption" color="text.secondary">New Attachments:</Typography>
+                <List dense>
+                  {newAttachments.map((file, index) => (
+                    <ListItem key={index}
+                      secondaryAction={
+                        <IconButton edge="end" onClick={() => handleRemoveNewAttachment(index)} size="small">
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      }
+                    >
+                      <ListItemText primary={file.name} secondary={`${(file.size / 1024).toFixed(1)} KB`} />
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
             )}
           </Box>
 
           {subject.attachments && subject.attachments.length > 0 && (
             <>
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Attachments</Typography>
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Existing Attachments</Typography>
               <List sx={{ bgcolor: 'rgba(255,255,255,0.03)', borderRadius: 2 }}>
                 {subject.attachments.map(attachment => (
                   <ListItem
                     key={attachment.id}
                     secondaryAction={
-                      <IconButton edge="end" onClick={() => deleteAttachment(subjectId, attachment.id)} size="small" color="error">
+                      <IconButton edge="end" onClick={() => deleteAttachment(subjectId, attachment.id, attachment.path)} size="small" color="error">
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     }
@@ -671,6 +697,85 @@ const SubjectDetail = () => {
       </Dialog>
 
       <PdfViewer open={pdfViewerOpen} onClose={handleClosePdf} file={selectedPdf} />
+
+      {/* Topic Review Dialog */}
+      <Dialog
+        open={openTopicReviewDialog}
+        onClose={() => setOpenTopicReviewDialog(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          className: 'glass-card',
+          sx: { bgcolor: 'rgba(20, 20, 25, 0.95)' }
+        }}
+      >
+        <DialogTitle sx={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+          Review Generated Topics
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Select the topics you want to add to your subject. You can also add more topics manually.
+          </Typography>
+
+          <List sx={{ maxHeight: '50vh', overflow: 'auto' }}>
+            {generatedTopics.map((topic, index) => (
+              <ListItem key={index} divider>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={selectedTopics.includes(index)}
+                      onChange={() => handleToggleTopicSelection(index)}
+                      color="primary"
+                    />
+                  }
+                  label={
+                    <Box>
+                      <Typography variant="subtitle1">{topic.name}</Typography>
+                      <Typography variant="body2" color="text.secondary">{topic.description}</Typography>
+                      <Stack direction="row" spacing={1} sx={{ mt: 0.5 }}>
+                        <Chip size="small" label={`${topic.estimatedMinutes} mins`} icon={<TimerIcon />} />
+                      </Stack>
+                    </Box>
+                  }
+                  sx={{ width: '100%', alignItems: 'flex-start', ml: 0 }}
+                />
+              </ListItem>
+            ))}
+          </List>
+
+          <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+            <TextField
+              placeholder="Add another topic manually..."
+              fullWidth
+              size="small"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && e.target.value.trim()) {
+                  const newTopic = {
+                    name: e.target.value,
+                    description: 'Manually added',
+                    estimatedMinutes: 60,
+                    dueDate: null
+                  };
+                  setGeneratedTopics(prev => [...prev, newTopic]);
+                  setSelectedTopics(prev => [...prev, generatedTopics.length]);
+                  e.target.value = '';
+                }
+              }}
+            />
+            <Button variant="outlined" disabled>Press Enter</Button>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+          <Button onClick={() => setOpenTopicReviewDialog(false)} color="inherit">Cancel</Button>
+          <Button
+            onClick={handleConfirmAddTopics}
+            variant="contained"
+            disabled={selectedTopics.length === 0}
+          >
+            Add {selectedTopics.length} Topics
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

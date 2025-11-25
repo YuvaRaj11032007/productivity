@@ -10,22 +10,22 @@ const initialState = {
     gemini: 'gemini-2.5-flash-lite',
   },
   isConfigured: false,
-  
+
   // Chat State
   conversations: [],
   isLoading: false,
   error: null,
-  
+
   // AI Insights
   productivityAnalysis: null,
   dailyPlan: null,
   recommendations: [],
   routineMemory: {},
-  
+
   // UI State
   isAIAssistantOpen: false,
   currentView: 'chat', // 'chat', 'insights', 'planning', 'roadmap'
-  
+
   // Analytics
   totalQueries: 0,
   lastAnalysisTime: null,
@@ -38,13 +38,13 @@ function aiReducer(state, action) {
       aiService.setApiKeys({ geminiApiKey: geminiKey });
       try {
         localStorage.setItem('ai_keys', JSON.stringify({ geminiApiKey: geminiKey || state.geminiApiKey }));
-      } catch {}
+      } catch { }
       return {
         ...state,
         geminiApiKey: geminiKey || state.geminiApiKey,
         isConfigured: aiService.isConfigured()
       };
-      
+
     case 'SET_MODEL':
       // Ignore model changes, always use gemini-2.5-flash-lite
       aiService.setModel('gemini', 'gemini-2.5-flash-lite');
@@ -55,88 +55,88 @@ function aiReducer(state, action) {
           gemini: 'gemini-2.5-flash-lite'
         }
       };
-      
+
     case 'ADD_CONVERSATION':
       return {
         ...state,
         conversations: [...state.conversations, action.payload],
         totalQueries: action.payload.type === 'user' ? state.totalQueries + 1 : state.totalQueries
       };
-      
+
     case 'SET_LOADING':
       return {
         ...state,
         isLoading: action.payload
       };
-      
+
     case 'SET_ERROR':
       return {
         ...state,
         error: action.payload,
         isLoading: false
       };
-      
+
     case 'SET_PRODUCTIVITY_ANALYSIS':
       return {
         ...state,
         productivityAnalysis: action.payload,
         lastAnalysisTime: new Date().toISOString()
       };
-      
+
     case 'SET_DAILY_PLAN':
       return {
         ...state,
         dailyPlan: action.payload
       };
-      
+
     case 'SET_RECOMMENDATIONS':
       return {
         ...state,
         recommendations: action.payload
       };
-      
+
     case 'UPDATE_ROUTINE_MEMORY':
       return {
         ...state,
         routineMemory: { ...state.routineMemory, ...action.payload }
       };
-      
+
     case 'TOGGLE_AI_ASSISTANT':
       return {
         ...state,
         isAIAssistantOpen: !state.isAIAssistantOpen
       };
-      
+
     case 'SET_AI_ASSISTANT_OPEN':
       return {
         ...state,
         isAIAssistantOpen: action.payload
       };
-      
+
     case 'SET_CURRENT_VIEW':
       return {
         ...state,
         currentView: action.payload
       };
-      
+
     case 'CLEAR_CONVERSATIONS':
       return {
         ...state,
         conversations: []
       };
-      
+
     case 'CLEAR_ERROR':
       return {
         ...state,
         error: null
       };
-      
+
     case 'INITIALIZE_AI_STATE':
       return {
         ...state,
         ...action.payload
       };
-      
+
     default:
       return state;
   }
@@ -174,7 +174,7 @@ export const AIProvider = ({ children }) => {
           // Update state so UI shows configured immediately
           dispatch({ type: 'SET_API_KEYS', payload: { geminiKey: parsed.geminiApiKey || '' } });
         }
-      } catch {}
+      } catch { }
     }
     // Load routine memory
     const routineMemory = aiService.getRoutineMemory();
@@ -215,7 +215,7 @@ export const AIProvider = ({ children }) => {
 
     try {
       const response = await aiService.generateResponse(message, appData);
-      
+
       const aiMessage = {
         id: Date.now() + 1,
         type: 'assistant',
@@ -231,7 +231,7 @@ export const AIProvider = ({ children }) => {
     }
   };
 
-  const analyzeProductivity = async (subjects, studySessions, dailyGoals, classSchedule) => {
+  const analyzeProductivity = async (subjects, studySessions, dailyGoals, classSchedule, context = {}) => {
     if (!state.isConfigured) {
       dispatch({ type: 'SET_ERROR', payload: 'AI is not configured. Please set up your API keys in settings.' });
       return;
@@ -241,7 +241,7 @@ export const AIProvider = ({ children }) => {
     dispatch({ type: 'CLEAR_ERROR' });
 
     try {
-      const analysis = await aiService.analyzeProductivity(subjects, studySessions, dailyGoals, classSchedule);
+      const analysis = await aiService.analyzeProductivity(subjects, studySessions, dailyGoals, classSchedule, context);
       dispatch({ type: 'SET_PRODUCTIVITY_ANALYSIS', payload: analysis });
       return analysis;
     } catch (error) {
@@ -252,7 +252,7 @@ export const AIProvider = ({ children }) => {
     }
   };
 
-  const generateDailyPlan = async (subjects, studySessions, dailyGoals, classSchedule, preferences = {}) => {
+  const generateDailyPlan = async (subjects, studySessions, dailyGoals, classSchedule, context = {}) => {
     if (!state.isConfigured) {
       dispatch({ type: 'SET_ERROR', payload: 'AI is not configured. Please set up your API keys in settings.' });
       return;
@@ -262,7 +262,7 @@ export const AIProvider = ({ children }) => {
     dispatch({ type: 'CLEAR_ERROR' });
 
     try {
-      const plan = await aiService.planDay(subjects, studySessions, dailyGoals, classSchedule, preferences);
+      const plan = await aiService.planDay(subjects, studySessions, dailyGoals, classSchedule, context);
       dispatch({ type: 'SET_DAILY_PLAN', payload: plan });
       return plan;
     } catch (error) {
@@ -284,7 +284,7 @@ export const AIProvider = ({ children }) => {
 
     try {
       const roadmap = await aiService.generateRoadmap(subject, currentLevel, targetLevel, timeframe);
-      
+
       // Add to conversations for reference
       const roadmapMessage = {
         id: Date.now(),
@@ -295,7 +295,7 @@ export const AIProvider = ({ children }) => {
         subject: subject
       };
       dispatch({ type: 'ADD_CONVERSATION', payload: roadmapMessage });
-      
+
       return roadmap;
     } catch (error) {
       console.error('Roadmap Generation Error:', error);
@@ -305,7 +305,7 @@ export const AIProvider = ({ children }) => {
     }
   };
 
-  const generateSubjectWithSubtopics = async (subjectName, description, level, timeframe, appContext) => {
+  const generateSubjectWithSubtopics = async (subjectName, description, level, timeframe, context = {}) => {
     if (!state.isConfigured) {
       dispatch({ type: 'SET_ERROR', payload: 'AI is not configured. Please set up your API keys in settings.' });
       return;
@@ -315,8 +315,8 @@ export const AIProvider = ({ children }) => {
     dispatch({ type: 'CLEAR_ERROR' });
 
     try {
-      const subjectStructure = await aiService.generateSubjectWithSubtopics(subjectName, description, level, timeframe);
-      
+      const subjectStructure = await aiService.generateSubjectWithSubtopics(subjectName, description, level, timeframe, context);
+
       // Add to conversations for reference
       const subjectMessage = {
         id: Date.now(),
@@ -328,7 +328,7 @@ export const AIProvider = ({ children }) => {
         subjectStructure: subjectStructure
       };
       dispatch({ type: 'ADD_CONVERSATION', payload: subjectMessage });
-      
+
       return subjectStructure;
     } catch (error) {
       console.error('Subject Generation Error:', error);
@@ -351,7 +351,7 @@ export const AIProvider = ({ children }) => {
     try {
       // Extract subtopics from the AI-generated structure
       const subtopics = aiService.extractSubtopicsFromStructure(subjectStructure);
-      
+
       // Create the main subject
       const newSubject = {
         name: subjectName,
@@ -361,7 +361,7 @@ export const AIProvider = ({ children }) => {
         category: 'AI Generated',
         tasks: []
       };
-      
+
       // Add subtopics as tasks if any were found
       if (subtopics.length > 0) {
         newSubject.tasks = [];
@@ -375,12 +375,12 @@ export const AIProvider = ({ children }) => {
           });
         }
       }
-      
+
       // Add the subject to the app context
       if (appContext && typeof appContext.addSubject === 'function') {
         appContext.addSubject(newSubject);
       }
-      
+
       return {
         success: true,
         message: `Subject "${subjectName}" created successfully with ${subtopics.length} subtopics as tasks!`,
@@ -399,7 +399,7 @@ export const AIProvider = ({ children }) => {
     try {
       // Extract phases and tasks from the AI-generated roadmap
       const phases = aiService.extractRoadmapFromStructure(roadmapStructure);
-      
+
       // Create the main subject
       const newSubject = {
         name: `${subjectName} - Learning Roadmap`,
@@ -409,7 +409,7 @@ export const AIProvider = ({ children }) => {
         category: 'AI Roadmap',
         tasks: []
       };
-      
+
       // Convert phases and tasks to a flat task list with phase information
       const roadmapTasks = [];
       phases.forEach((phase, phaseIndex) => {
@@ -423,7 +423,7 @@ export const AIProvider = ({ children }) => {
           isPhase: true,
           phaseId: phase.id
         });
-        
+
         // Add individual tasks within the phase
         phase.tasks.forEach((task, taskIndex) => {
           roadmapTasks.push({
@@ -438,15 +438,15 @@ export const AIProvider = ({ children }) => {
           });
         });
       });
-      
+
       newSubject.tasks = roadmapTasks;
-      
+
       // Add the subject to the app context and capture id
       let createdId = null;
       if (appContext && typeof appContext.addSubject === 'function') {
         createdId = appContext.addSubject(newSubject);
       }
-      
+
       return {
         success: true,
         message: `Interactive roadmap for "${subjectName}" created successfully with ${roadmapTasks.length} tasks across ${phases.length} phases!`,
@@ -462,7 +462,7 @@ export const AIProvider = ({ children }) => {
     }
   };
 
-  const getRecommendations = async (subjects, studySessions, dailyGoals, classSchedule) => {
+  const getRecommendations = async (subjects, studySessions, dailyGoals, classSchedule, context = {}) => {
     if (!state.isConfigured) {
       dispatch({ type: 'SET_ERROR', payload: 'AI is not configured. Please set up your API keys in settings.' });
       return;
@@ -472,7 +472,7 @@ export const AIProvider = ({ children }) => {
     dispatch({ type: 'CLEAR_ERROR' });
 
     try {
-      const recommendations = await aiService.getRecommendations(subjects, studySessions, dailyGoals, classSchedule);
+      const recommendations = await aiService.getRecommendations(subjects, studySessions, dailyGoals, classSchedule, context);
       dispatch({ type: 'SET_RECOMMENDATIONS', payload: recommendations });
       return recommendations;
     } catch (error) {
@@ -497,7 +497,7 @@ export const AIProvider = ({ children }) => {
   const testConnection = async (provider = null) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     dispatch({ type: 'CLEAR_ERROR' });
-    
+
     try {
       const result = await aiService.testConnection(provider);
       if (result.success) {

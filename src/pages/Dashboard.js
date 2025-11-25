@@ -255,7 +255,7 @@ const Dashboard = () => {
           <StatCard key="goals-met" icon={<CheckCircleIcon />} value={goalsMet} label="Goals Met Today" color="#10b981" />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard key="weekly-consistency" icon={<TrendingUpIcon />} value="85%" label="Weekly Consistency" color="#f59e0b" />
+          <StatCard key="weekly-consistency" icon={<TrendingUpIcon />} value={`${Math.round((new Set(recentSessions.map(s => new Date(s.date).toDateString())).size / 7) * 100)}%`} label="Weekly Consistency" color="#f59e0b" />
         </Grid>
       </Grid>
 
