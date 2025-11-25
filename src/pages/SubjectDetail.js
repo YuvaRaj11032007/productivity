@@ -138,87 +138,56 @@ const SubjectDetail = () => {
     }
   }, [subject, subjectId, studySessions, subjects, subjectNotes]);
 
-  const handleConfirmAddTopics = async () => {
-    const topicsToAdd = generatedTopics.filter((_, index) => selectedTopics.includes(index));
-    if (topicsToAdd.length > 0) {
-      await addMultipleTasks(subjectId, topicsToAdd);
-      fetchData();
-    }
-    setOpenTopicReviewDialog(false);
-    setGeneratedTopics([]);
-    setSelectedTopics([]);
+  const [openAddTopicDialog, setOpenAddTopicDialog] = useState(false);
+  const [newTopicName, setNewTopicName] = useState('');
+
+  // ... existing useEffect ...
+
+  // ... existing handleGenerateTopicsAI ...
+
+  // ... existing handleConfirmAddTopics ...
+
+  // ... existing handleToggleTopicSelection ...
+
+  const handleOpenAddTopicDialog = () => {
+    setOpenAddTopicDialog(true);
   };
 
-  const handleToggleTopicSelection = (index) => {
-    const newSelected = [...selectedTopics];
-    if (newSelected.includes(index)) {
-      newSelected.splice(newSelected.indexOf(index), 1);
-    } else {
-      newSelected.push(index);
-    }
-    setSelectedTopics(newSelected);
+  const handleCloseAddTopicDialog = () => {
+    setOpenAddTopicDialog(false);
+    setNewTopicName('');
   };
 
-  const handleOpenSessionDialog = () => {
-    setOpenSessionDialog(true);
+  const handleManualAddTopic = async () => {
+    if (!newTopicName.trim()) return;
+    await addMultipleTasks(subjectId, [{ name: newTopicName, estimatedMinutes: 60 }]);
+    fetchData();
+    handleCloseAddTopicDialog();
   };
 
-  const handleCloseSessionDialog = () => {
-    setOpenSessionDialog(false);
-    setNewSession({
-      duration: 60,
-      notes: ''
-    });
-  };
+  // ... existing handleOpenSessionDialog ...
 
-  const handleSessionInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewSession({
-      ...newSession,
-      [name]: value
-    });
-  };
+  // ... existing handleCloseSessionDialog ...
 
-  const handleAddSession = () => {
-    addStudySession({
-      subjectId: subjectId,
-      duration: Number(newSession.duration),
-      notes: newSession.notes,
-      date: new Date().toISOString()
-    });
-    handleCloseSessionDialog();
-  };
+  // ... existing handleSessionInputChange ...
 
-  const handleOpenNotesDialog = () => {
-    setOpenNotesDialog(true);
-  };
+  // ... existing handleAddSession ...
 
-  const handleCloseNotesDialog = () => {
-    setOpenNotesDialog(false);
-  };
+  // ... existing handleOpenNotesDialog ...
 
-  const handleOpenPdf = (file) => {
-    setSelectedPdf(file);
-    setPdfViewerOpen(true);
-  };
+  // ... existing handleCloseNotesDialog ...
 
-  const handleClosePdf = () => {
-    setPdfViewerOpen(false);
-    setSelectedPdf(null);
-  };
+  // ... existing handleOpenPdf ...
 
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setNewAttachments(prev => [...prev, ...Array.from(e.target.files)]);
-    }
-  };
+  // ... existing handleClosePdf ...
 
-  const handleRemoveNewAttachment = (index) => {
-    setNewAttachments(prev => prev.filter((_, i) => i !== index));
-  };
+  // ... existing handleFileChange ...
+
+  // ... existing handleRemoveNewAttachment ...
 
   const handleSaveNotes = async () => {
-    updateSubject(subjectId, { notes: subjectNotes });
+    // We no longer save text notes, only attachments
+    // updateSubject(subjectId, { notes: subjectNotes }); 
 
     // Upload all new attachments
     for (const file of newAttachments) {
@@ -227,31 +196,16 @@ const SubjectDetail = () => {
 
     setNewAttachments([]);
     handleCloseNotesDialog();
+    fetchData(); // Refresh to show new attachments
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-  };
+  // ... existing handleDragOver ...
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    const files = e.dataTransfer.files;
-    if (files && files.length > 0) {
-      setNewAttachments(prev => [...prev, ...Array.from(files)]);
-    }
-  };
+  // ... existing handleDrop ...
 
-  const handleTabChange = (event, newValue) => {
-    setTabValue(newValue);
-  };
+  // ... existing handleTabChange ...
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <CircularProgress sx={{ color: 'primary.main' }} />
-      </Box>
-    );
-  }
+  // ... existing loading check ...
 
   if (!subject) return null;
 
@@ -292,6 +246,18 @@ const SubjectDetail = () => {
           </Box>
 
           <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              variant="outlined"
+              startIcon={<AddIcon />}
+              onClick={handleOpenAddTopicDialog}
+              sx={{
+                borderColor: 'rgba(255,255,255,0.1)',
+                color: 'text.primary',
+                '&:hover': { borderColor: subject.color, bgcolor: `${subject.color}10` }
+              }}
+            >
+              Add Topic
+            </Button>
             <Button
               variant="outlined"
               startIcon={<NoteIcon />}
@@ -514,32 +480,46 @@ const SubjectDetail = () => {
             </Box>
           </Paper>
 
-          {/* Notes Preview */}
-          {subject.notes && (
-            <Paper className="glass-card" sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6" fontWeight="bold">Quick Notes</Typography>
-                <IconButton size="small" onClick={handleOpenNotesDialog}>
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              </Box>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{
-                  whiteSpace: 'pre-wrap',
-                  maxHeight: 200,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 8,
-                  WebkitBoxOrient: 'vertical',
-                }}
-              >
-                {subject.notes}
+          {/* Notes Preview - Now showing Attachments */}
+          <Paper className="glass-card" sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" fontWeight="bold">Notes & Attachments</Typography>
+              <IconButton size="small" onClick={handleOpenNotesDialog}>
+                <AddIcon fontSize="small" />
+              </IconButton>
+            </Box>
+
+            {subject.attachments && subject.attachments.length > 0 ? (
+              <List dense sx={{ maxHeight: 200, overflow: 'auto' }}>
+                {subject.attachments.map(attachment => (
+                  <ListItem
+                    key={attachment.id}
+                    disablePadding
+                    sx={{ mb: 1 }}
+                  >
+                    <Button
+                      variant="text"
+                      onClick={() => handleOpenPdf(attachment)}
+                      startIcon={<NoteIcon fontSize="small" />}
+                      sx={{
+                        textTransform: 'none',
+                        justifyContent: 'flex-start',
+                        width: '100%',
+                        color: 'text.primary',
+                        textAlign: 'left'
+                      }}
+                    >
+                      {attachment.name}
+                    </Button>
+                  </ListItem>
+                ))}
+              </List>
+            ) : (
+              <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                No attachments yet. Click + to add PDF, PPT, or other files.
               </Typography>
-            </Paper>
-          )}
+            )}
+          </Paper>
         </Grid>
       </Grid>
 
@@ -597,68 +577,59 @@ const SubjectDetail = () => {
           sx: { bgcolor: 'rgba(20, 20, 25, 0.95)' }
         }}
       >
-        <DialogTitle sx={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>Subject Notes</DialogTitle>
+        <DialogTitle sx={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>Subject Notes & Attachments</DialogTitle>
         <DialogContent sx={{ pt: 3 }} onDragOver={handleDragOver} onDrop={handleDrop}>
           <Box sx={{
             border: '2px dashed rgba(255,255,255,0.1)',
             borderRadius: 2,
-            p: 2,
-            mb: 2,
+            p: 3,
+            mb: 3,
             textAlign: 'center',
-            bgcolor: 'rgba(255,255,255,0.02)'
+            bgcolor: 'rgba(255,255,255,0.02)',
+            cursor: 'pointer',
+            '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' }
           }}>
-            <Typography variant="body2" color="text.secondary">
-              Drag and drop files here or use the button below
+            <Typography variant="body1" gutterBottom>
+              Drag and drop files here
             </Typography>
-          </Box>
-          <TextField
-            autoFocus
-            margin="dense"
-            name="notes"
-            label="Notes"
-            multiline
-            rows={8}
-            fullWidth
-            variant="outlined"
-            value={subjectNotes}
-            onChange={(e) => setSubjectNotes(e.target.value)}
-            sx={{ mb: 3, mt: 1 }}
-          />
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+              Supported: PDF, PPT, DOC, TXT, Images
+            </Typography>
 
-          <Box sx={{ mb: 2 }}>
             <Button
               variant="outlined"
               component="label"
               startIcon={<AddIcon />}
             >
-              Add Attachments
+              Browse Files
               <input
                 type="file"
                 multiple
                 hidden
+                accept=".pdf,.ppt,.pptx,.doc,.docx,.txt,image/*"
                 onChange={handleFileChange}
               />
             </Button>
-
-            {newAttachments.length > 0 && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="caption" color="text.secondary">New Attachments:</Typography>
-                <List dense>
-                  {newAttachments.map((file, index) => (
-                    <ListItem key={index}
-                      secondaryAction={
-                        <IconButton edge="end" onClick={() => handleRemoveNewAttachment(index)} size="small">
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      }
-                    >
-                      <ListItemText primary={file.name} secondary={`${(file.size / 1024).toFixed(1)} KB`} />
-                    </ListItem>
-                  ))}
-                </List>
-              </Box>
-            )}
           </Box>
+
+          {newAttachments.length > 0 && (
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" color="primary" sx={{ mb: 1 }}>New Files to Upload:</Typography>
+              <List dense sx={{ bgcolor: 'rgba(33, 150, 243, 0.05)', borderRadius: 1 }}>
+                {newAttachments.map((file, index) => (
+                  <ListItem key={index}
+                    secondaryAction={
+                      <IconButton edge="end" onClick={() => handleRemoveNewAttachment(index)} size="small">
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    }
+                  >
+                    <ListItemText primary={file.name} secondary={`${(file.size / 1024).toFixed(1)} KB`} />
+                  </ListItem>
+                ))}
+              </List>
+            </Box>
+          )}
 
           {subject.attachments && subject.attachments.length > 0 && (
             <>
@@ -691,8 +662,43 @@ const SubjectDetail = () => {
           )}
         </DialogContent>
         <DialogActions sx={{ p: 3, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-          <Button onClick={handleCloseNotesDialog} color="inherit">Cancel</Button>
-          <Button onClick={handleSaveNotes} variant="contained">Save Notes</Button>
+          <Button onClick={handleCloseNotesDialog} color="inherit">Close</Button>
+          <Button onClick={handleSaveNotes} variant="contained" disabled={newAttachments.length === 0}>
+            Upload {newAttachments.length > 0 ? `(${newAttachments.length})` : ''}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openAddTopicDialog}
+        onClose={handleCloseAddTopicDialog}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          className: 'glass-card',
+          sx: { bgcolor: 'rgba(20, 20, 25, 0.95)' }
+        }}
+      >
+        <DialogTitle sx={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>Add New Topic</DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Topic Name"
+            fullWidth
+            variant="outlined"
+            value={newTopicName}
+            onChange={(e) => setNewTopicName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleManualAddTopic();
+              }
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 3, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+          <Button onClick={handleCloseAddTopicDialog} color="inherit">Cancel</Button>
+          <Button onClick={handleManualAddTopic} variant="contained" disabled={!newTopicName.trim()}>Add Topic</Button>
         </DialogActions>
       </Dialog>
 
